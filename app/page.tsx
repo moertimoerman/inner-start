@@ -1,276 +1,375 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
-function StarCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const COUNT = 180;
-    const stars = Array.from({ length: COUNT }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      r: Math.random() * 1.2 + 0.3,
-      phase: Math.random() * Math.PI * 2,
-      speed: 0.0004 + Math.random() * 0.0008,
-    }));
-
-    let raf: number;
-    const draw = (t: number) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (const s of stars) {
-        const alpha = 0.15 + 0.85 * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
-        ctx.beginPath();
-        ctx.arc(s.x * canvas.width, s.y * canvas.height, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(245, 220, 168, ${alpha})`;
-        ctx.fill();
-      }
-      raf = requestAnimationFrame(draw);
-    };
-    raf = requestAnimationFrame(draw);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
-
+function Star({ style }: { style: React.CSSProperties }) {
   return (
-    <canvas
-      ref={canvasRef}
-      style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}
-      aria-hidden="true"
+    <div
+      className="absolute rounded-full animate-twinkle"
+      style={style}
     />
   );
 }
 
-function PhaseBadge({
-  phase, label, sub, delay,
+function StarField() {
+  const [stars, setStars] = useState<
+    { id: number; left: string; top: string; size: number; delay: number; duration: number; color: string }[]
+  >([]);
+
+  useEffect(() => {
+    const generated = Array.from({ length: 70 }, (_, i) => ({
+      id: i,
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      size: Math.random() * 2.5 + 0.5,
+      delay: Math.random() * 4,
+      duration: Math.random() * 3 + 2,
+      color: Math.random() > 0.8 ? "var(--moon-gold)" : "var(--text-primary)",
+    }));
+    setStars(generated);
+  }, []);
+
+  return (
+    <>
+      {stars.map((s) => (
+        <Star
+          key={s.id}
+          style={{
+            left: s.left,
+            top: s.top,
+            width: s.size,
+            height: s.size,
+            background: s.color,
+            animationDelay: `${s.delay}s`,
+            animationDuration: `${s.duration}s`,
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
+function Moon() {
+  return (
+    <div
+      className="absolute animate-glow-pulse"
+      style={{
+        top: "5%",
+        right: "8%",
+        width: 160,
+        height: 160,
+        borderRadius: "50%",
+        background:
+          "radial-gradient(circle at 40% 40%, var(--moon-glow), var(--moon-gold), var(--moon-light))",
+        pointerEvents: "none",
+      }}
+    />
+  );
+}
+
+function PhaseCard({
+  phase,
+  title,
+  person,
+  description,
+  affirmation,
 }: {
-  phase: string; label: string; sub: string; delay: string;
+  phase: string;
+  title: string;
+  person: string;
+  description: string;
+  affirmation: string;
 }) {
   return (
-    <div style={{
-      animation: `floatUp 0.9s ease forwards ${delay}`,
-      opacity: 0,
-      background: "rgba(255,255,255,0.04)",
-      border: "1px solid rgba(240,198,122,0.12)",
-      borderRadius: "1rem",
-      padding: "1.5rem",
-      flex: 1,
-      minWidth: "200px",
-    }}>
-      <span style={{
-        display: "inline-block",
-        fontSize: "0.7rem",
-        fontFamily: "var(--font-dm-mono)",
-        letterSpacing: "0.15em",
-        color: "var(--moon-gold)",
-        background: "rgba(240,198,122,0.10)",
-        padding: "2px 8px",
-        borderRadius: "4px",
-        marginBottom: "0.75rem",
-      }}>
+    <div
+      style={{
+        flex: 1,
+        minWidth: 280,
+        padding: 32,
+        borderRadius: 20,
+        background: "linear-gradient(135deg, var(--night-base), rgba(37,37,96,0.3))",
+        border: "1px solid rgba(37,37,96,0.4)",
+      }}
+    >
+      <p
+        style={{
+          fontFamily: "var(--font-cormorant)",
+          fontSize: 13,
+          letterSpacing: "0.15em",
+          textTransform: "uppercase",
+          color: "var(--moon-gold)",
+          marginBottom: 12,
+        }}
+      >
         {phase}
-      </span>
-      <p style={{
-        fontFamily: "var(--font-cormorant)",
-        fontSize: "1.25rem",
-        fontWeight: 300,
-        marginBottom: "0.25rem",
-        color: "var(--moon-light)",
-      }}>
-        {label}
       </p>
-      <p style={{ fontSize: "0.85rem", opacity: 0.5, color: "var(--moon-light)" }}>{sub}</p>
+      <h3
+        style={{
+          fontFamily: "var(--font-cormorant)",
+          fontSize: 22,
+          color: "var(--text-primary)",
+          fontWeight: 600,
+          marginBottom: 8,
+        }}
+      >
+        {person}
+      </h3>
+      <p
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: 14,
+          color: "var(--text-muted)",
+          lineHeight: 1.6,
+          marginBottom: 20,
+        }}
+      >
+        {description}
+      </p>
+      <div
+        style={{
+          padding: "14px 18px",
+          background: "var(--accent-soft)",
+          borderRadius: 10,
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-cormorant)",
+            fontSize: 17,
+            color: "var(--moon-light)",
+            fontStyle: "italic",
+            lineHeight: 1.6,
+          }}
+          dangerouslySetInnerHTML={{ __html: affirmation }}
+        />
+      </div>
     </div>
   );
 }
 
 export default function Home() {
   return (
-    <main style={{
-      background: "var(--night-deep)",
-      minHeight: "100vh",
-      display: "flex",
-      flexDirection: "column",
-      position: "relative",
-    }}>
-      <StarCanvas />
-
-      {/* Achtergrond gloed */}
-      <div aria-hidden="true" style={{
-        position: "fixed", top: 0, left: "50%",
-        transform: "translateX(-50%)",
-        width: "120vw", height: "60vh",
-        background: "radial-gradient(ellipse 70% 50% at 50% 0%, rgba(37,37,96,0.6) 0%, transparent 100%)",
-        pointerEvents: "none", zIndex: 0,
-      }} />
-
-      {/* Nav */}
-      <nav style={{
-        position: "relative", zIndex: 10,
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        padding: "1.5rem 2rem", maxWidth: "72rem", margin: "0 auto", width: "100%",
-      }}>
-        <span style={{
-          fontFamily: "var(--font-cormorant)",
-          fontSize: "1.5rem", fontWeight: 300, letterSpacing: "0.25em",
-          background: "linear-gradient(135deg, #f0c67a, #f8e8c4, #f0c67a)",
-          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-        }}>
-          inner
-        </span>
-        <a href="#cta" style={{
-          background: "linear-gradient(135deg, #f0c67a 0%, #c8922a 100%)",
-          color: "#0d0d2b", padding: "0.5rem 1.25rem",
-          borderRadius: "9999px", fontSize: "0.875rem",
-          fontWeight: 500, textDecoration: "none",
-          fontFamily: "var(--font-dm-sans)",
-        }}>
-          Probeer gratis
-        </a>
-      </nav>
+    <main
+      style={{
+        minHeight: "100vh",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <StarField />
 
       {/* Hero */}
-      <section style={{
-        position: "relative", zIndex: 10,
-        display: "flex", flexDirection: "column", alignItems: "center",
-        textAlign: "center", padding: "3rem 1.5rem 5rem",
-        maxWidth: "56rem", margin: "0 auto", width: "100%",
-      }}>
-        {/* Maan */}
-        <div style={{
-          width: "clamp(160px,25vw,280px)", aspectRatio: "1",
-          borderRadius: "50%",
-          background: "radial-gradient(circle at 38% 38%, #fffde8 0%, #f5dca8 30%, #f0c67a 60%, #c8922a 100%)",
-          boxShadow: "0 0 60px 20px rgba(240,198,122,0.3), 0 0 120px 60px rgba(240,198,122,0.12)",
-          marginBottom: "3rem",
-          animation: "floatUp 0.9s ease forwards 0.1s",
-          opacity: 0,
-        }} />
+      <section
+        style={{
+          position: "relative",
+          padding: "100px 24px 80px",
+          maxWidth: 800,
+          margin: "0 auto",
+          textAlign: "center",
+        }}
+      >
+        <Moon />
 
-        {/* Overline */}
-        <p style={{
-          fontFamily: "var(--font-dm-mono)",
-          fontSize: "0.7rem", letterSpacing: "0.3em",
-          textTransform: "uppercase", color: "var(--moon-gold)",
-          opacity: 0.7, marginBottom: "1.25rem",
-          animation: "floatUp 0.9s ease forwards 0.2s",
-        }}>
-          Inner Start — slaapaffirmaties voor kinderen
+        <p
+          className="animate-float-up"
+          style={{
+            fontFamily: "var(--font-cormorant)",
+            fontSize: 14,
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            color: "var(--moon-gold)",
+            marginBottom: 20,
+            animationDelay: "0.1s",
+          }}
+        >
+          Inner Start
         </p>
 
-        {/* Headline */}
-        <h1 style={{
-          fontFamily: "var(--font-cormorant)",
-          fontSize: "clamp(2.6rem,7vw,4.5rem)",
-          fontWeight: 300, lineHeight: 1.2,
-          color: "var(--moon-light)",
-          marginBottom: "1.5rem",
-          animation: "floatUp 0.9s ease forwards 0.3s",
-          opacity: 0,
-        }}>
-          Jouw kind in slaap,<br />
-          <span style={{
-            background: "linear-gradient(135deg, #f0c67a, #f8e8c4, #f0c67a)",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-          }}>
-            diep veilig van binnen.
-          </span>
+        <h1
+          className="animate-float-up"
+          style={{
+            fontFamily: "var(--font-cormorant)",
+            fontSize: "clamp(36px, 6vw, 56px)",
+            fontWeight: 600,
+            color: "var(--text-primary)",
+            lineHeight: 1.15,
+            marginBottom: 20,
+            animationDelay: "0.3s",
+          }}
+        >
+          Geef je kind
+          <br />
+          <span style={{ color: "var(--moon-gold)" }}>innerlijke rust</span>
         </h1>
 
-        {/* Subtekst */}
-        <p style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontWeight: 300, fontSize: "1rem", lineHeight: 1.7,
-          maxWidth: "36rem", color: "var(--moon-light)",
-          marginBottom: "2.5rem",
-          animation: "floatUp 0.9s ease forwards 0.4s",
-          opacity: 0,
-        }}>
-          Terwijl jouw kind in slaap valt, fluistert Inner zachte affirmaties die
-          het onderbewustzijn bereiken — wetenschappelijk onderbouwd, ontworpen
-          voor de rustgevende overgang naar diepe slaap.
+        <p
+          className="animate-float-up"
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: 18,
+            color: "var(--text-muted)",
+            lineHeight: 1.7,
+            maxWidth: 520,
+            margin: "0 auto 40px",
+            animationDelay: "0.5s",
+          }}
+        >
+          Gepersonaliseerde affirmaties die meegroeien met je kind. Gebaseerd op
+          het hypnagogische venster — het moment waarop het brein het meest
+          ontvankelijk is.
         </p>
 
-        {/* Affirmatie pills */}
-        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0.75rem", marginBottom: "3rem" }}>
-          {[
-            { t: "\u201cEmma is veilig\u201d", d: "0.5s" },
-            { t: "\u201cEmma is geliefd\u201d", d: "0.65s" },
-            { t: "\u201cIk ben goed zoals ik ben\u201d", d: "0.8s" },
-          ].map(({ t, d }) => (
-            <span key={t} style={{
-              fontFamily: "var(--font-cormorant)",
-              fontStyle: "italic", fontSize: "1.05rem",
-              padding: "0.5rem 1rem", borderRadius: "9999px",
-              background: "rgba(240,198,122,0.08)",
-              border: "1px solid rgba(240,198,122,0.18)",
-              color: "var(--moon-light)",
-              animation: `floatUp 0.9s ease forwards ${d}`,
-              opacity: 0,
-            }}>
-              {t}
-            </span>
-          ))}
-        </div>
-
-        {/* CTA */}
-        <div id="cta" style={{
-          display: "flex", flexDirection: "column",
-          alignItems: "center", gap: "0.75rem",
-          animation: "floatUp 0.9s ease forwards 0.9s",
-          opacity: 0,
-        }}>
-          <a href="#" style={{
-            background: "linear-gradient(135deg, #f0c67a 0%, #c8922a 100%)",
-            color: "#0d0d2b", padding: "1rem 2.5rem",
-            borderRadius: "9999px", fontSize: "1rem",
-            fontWeight: 500, textDecoration: "none",
+        <a
+          href="#probeer"
+          className="animate-float-up"
+          style={{
+            display: "inline-block",
+            padding: "16px 36px",
+            background: "linear-gradient(135deg, var(--moon-gold), var(--moon-light))",
+            borderRadius: 30,
             fontFamily: "var(--font-dm-sans)",
-          }}>
-            Start gratis proefperiode
-          </a>
-          <span style={{ fontSize: "0.75rem", opacity: 0.4, color: "var(--moon-light)", fontFamily: "var(--font-dm-sans)" }}>
-            14 dagen gratis · daarna €6.99/mnd · geen verplichtingen
+            fontSize: 16,
+            fontWeight: 600,
+            color: "var(--night-deep)",
+            textDecoration: "none",
+            boxShadow: "0 4px 24px rgba(240,198,122,0.3)",
+            animationDelay: "0.7s",
+          }}
+        >
+          Probeer 7 dagen gratis
+        </a>
+      </section>
+
+      {/* Leeftijdscategorieën */}
+      <section
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: 10,
+          padding: "0 24px 60px",
+          flexWrap: "wrap",
+        }}
+      >
+        {["0-2 jr", "2-4 jr", "4-7 jr", "6-10 jr"].map((age) => (
+          <span
+            key={age}
+            style={{
+              padding: "8px 18px",
+              borderRadius: 20,
+              border: "1px solid var(--night-mid)",
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: 13,
+              color: "var(--text-muted)",
+              cursor: "pointer",
+            }}
+          >
+            {age}
           </span>
+        ))}
+      </section>
+
+      {/* Twee-fasen model */}
+      <section
+        style={{
+          maxWidth: 900,
+          margin: "0 auto",
+          padding: "0 24px 80px",
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-cormorant)",
+            fontSize: 14,
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            color: "var(--moon-gold)",
+            marginBottom: 28,
+            textAlign: "center",
+          }}
+        >
+          Het twee-fasen model
+        </p>
+
+        <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+          <PhaseCard
+            phase="Fase 1 · Inslapen"
+            title="Inslapen"
+            person="3e persoon"
+            description="Zachte stem, kind hoort dit terwijl het wegzakt. Het hypnagogische venster — maximale ontvankelijkheid."
+            affirmation="&ldquo;Emma is veilig.<br/>Emma is geliefd.<br/>Emma is goed zoals ze is.&rdquo;"
+          />
+          <PhaseCard
+            phase="Fase 2 · Lichte slaap"
+            title="Lichte slaap"
+            person="1e persoon"
+            description="Fluistertoon, werkt op het onderbewuste. Kind is in lichte slaap, brein verwerkt actief."
+            affirmation="&ldquo;Ik ben veilig.<br/>Ik ben geliefd.<br/>Ik ben goed zoals ik ben.&rdquo;"
+          />
         </div>
       </section>
 
-      {/* Twee fases */}
-      <section style={{
-        position: "relative", zIndex: 10,
-        padding: "0 1.5rem 6rem",
-        maxWidth: "56rem", margin: "0 auto", width: "100%",
-      }}>
-        <div style={{ display: "flex", flexDirection: "row", gap: "1.25rem", flexWrap: "wrap" }}>
-          <PhaseBadge phase="Fase 1 · inslapen" label="Zachte stem, derde persoon" sub='"Emma is veilig. Emma is geliefd."' delay="0.6s" />
-          <PhaseBadge phase="Fase 2 · lichte slaap" label="Fluisterstem, eerste persoon" sub='"Ik ben veilig. Ik ben goed zoals ik ben."' delay="0.75s" />
-          <PhaseBadge phase="Na 30 min" label="Automatisch gestopt" sub="Diepe slaap bereikt — geen geluid meer nodig." delay="0.9s" />
-        </div>
+      {/* USPs */}
+      <section
+        style={{
+          maxWidth: 600,
+          margin: "0 auto",
+          padding: "0 24px 80px",
+        }}
+      >
+        {[
+          "Gebaseerd op het hypnagogische venster",
+          "AI-gepersonaliseerd op naam van je kind",
+          "Vier leeftijdscategorieën: 0-2, 2-4, 4-7, 6-10",
+          "Automatische stop na ~30 minuten",
+        ].map((usp) => (
+          <div
+            key={usp}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: 16,
+            }}
+          >
+            <div
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "var(--moon-gold)",
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans)",
+                fontSize: 15,
+                color: "var(--text-muted)",
+              }}
+            >
+              {usp}
+            </span>
+          </div>
+        ))}
       </section>
 
       {/* Footer */}
-      <footer style={{
-        position: "relative", zIndex: 10,
-        textAlign: "center", paddingBottom: "2.5rem",
-        opacity: 0.35, fontFamily: "var(--font-dm-sans)",
-        fontSize: "0.75rem", color: "var(--moon-light)",
-      }}>
-        © 2025 Inner · inner.help · janto@inner.help
+      <footer
+        style={{
+          padding: "40px 24px",
+          textAlign: "center",
+          borderTop: "1px solid rgba(37,37,96,0.3)",
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: 13,
+            color: "var(--text-muted)",
+          }}
+        >
+          Inner Start · Innerlijke veiligheid voor je kind
+        </p>
       </footer>
     </main>
   );
