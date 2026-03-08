@@ -1,149 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { StarField } from "@/components/StarField";
+import { Hero } from "@/components/Hero";
+import { PhaseSection } from "@/components/PhaseSection";
+import { BenefitsSection } from "@/components/BenefitsSection";
+import { CTASection } from "@/components/CTASection";
 
-function Star({ style }: { style: React.CSSProperties }) {
+function SectionLabel({ text }: { text: string }) {
   return (
-    <div
-      className="absolute rounded-full animate-twinkle"
-      style={style}
-    />
-  );
-}
-
-function StarField() {
-  const [stars, setStars] = useState<
-    { id: number; left: string; top: string; size: number; delay: number; duration: number; color: string }[]
-  >([]);
-
-  useEffect(() => {
-    const generated = Array.from({ length: 70 }, (_, i) => ({
-      id: i,
-      left: `${Math.random() * 100}%`,
-      top: `${Math.random() * 100}%`,
-      size: Math.random() * 2.5 + 0.5,
-      delay: Math.random() * 4,
-      duration: Math.random() * 3 + 2,
-      color: Math.random() > 0.8 ? "var(--moon-gold)" : "var(--text-primary)",
-    }));
-    setStars(generated);
-  }, []);
-
-  return (
-    <>
-      {stars.map((s) => (
-        <Star
-          key={s.id}
-          style={{
-            left: s.left,
-            top: s.top,
-            width: s.size,
-            height: s.size,
-            background: s.color,
-            animationDelay: `${s.delay}s`,
-            animationDuration: `${s.duration}s`,
-          }}
-        />
-      ))}
-    </>
-  );
-}
-
-function Moon() {
-  return (
-    <div
-      className="absolute animate-glow-pulse"
+    <p
       style={{
-        top: "5%",
-        right: "8%",
-        width: 160,
-        height: 160,
-        borderRadius: "50%",
-        background:
-          "radial-gradient(circle at 40% 40%, var(--moon-glow), var(--moon-gold), var(--moon-light))",
-        pointerEvents: "none",
-      }}
-    />
-  );
-}
-
-function PhaseCard({
-  phase,
-  title,
-  person,
-  description,
-  affirmation,
-}: {
-  phase: string;
-  title: string;
-  person: string;
-  description: string;
-  affirmation: string;
-}) {
-  return (
-    <div
-      style={{
-        flex: 1,
-        minWidth: 280,
-        padding: 32,
-        borderRadius: 20,
-        background: "linear-gradient(135deg, var(--night-base), rgba(37,37,96,0.3))",
-        border: "1px solid rgba(37,37,96,0.4)",
+        fontFamily: "var(--font-cormorant)",
+        fontSize: 14,
+        letterSpacing: "0.2em",
+        textTransform: "uppercase",
+        color: "var(--moon-gold)",
+        marginBottom: 16,
+        textAlign: "center",
       }}
     >
-      <p
-        style={{
-          fontFamily: "var(--font-cormorant)",
-          fontSize: 13,
-          letterSpacing: "0.15em",
-          textTransform: "uppercase",
-          color: "var(--moon-gold)",
-          marginBottom: 12,
-        }}
-      >
-        {phase}
-      </p>
-      <h3
-        style={{
-          fontFamily: "var(--font-cormorant)",
-          fontSize: 22,
-          color: "var(--text-primary)",
-          fontWeight: 600,
-          marginBottom: 8,
-        }}
-      >
-        {person}
-      </h3>
-      <p
-        style={{
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: 14,
-          color: "var(--text-muted)",
-          lineHeight: 1.6,
-          marginBottom: 20,
-        }}
-      >
-        {description}
-      </p>
-      <div
-        style={{
-          padding: "14px 18px",
-          background: "var(--accent-soft)",
-          borderRadius: 10,
-        }}
-      >
-        <p
-          style={{
-            fontFamily: "var(--font-cormorant)",
-            fontSize: 17,
-            color: "var(--moon-light)",
-            fontStyle: "italic",
-            lineHeight: 1.6,
-          }}
-          dangerouslySetInnerHTML={{ __html: affirmation }}
-        />
-      </div>
-    </div>
+      {text}
+    </p>
   );
 }
 
@@ -157,90 +34,8 @@ export default function Home() {
       }}
     >
       <StarField />
+      <Hero />
 
-      {/* Hero */}
-      <section
-        style={{
-          position: "relative",
-          padding: "100px 24px 80px",
-          maxWidth: 800,
-          margin: "0 auto",
-          textAlign: "center",
-        }}
-      >
-        <Moon />
-
-        <p
-          className="animate-float-up"
-          style={{
-            fontFamily: "var(--font-cormorant)",
-            fontSize: 14,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "var(--moon-gold)",
-            marginBottom: 20,
-            animationDelay: "0.1s",
-          }}
-        >
-          Inner Start
-        </p>
-
-        <h1
-          className="animate-float-up"
-          style={{
-            fontFamily: "var(--font-cormorant)",
-            fontSize: "clamp(36px, 6vw, 56px)",
-            fontWeight: 600,
-            color: "var(--text-primary)",
-            lineHeight: 1.15,
-            marginBottom: 20,
-            animationDelay: "0.3s",
-          }}
-        >
-          Geef je kind
-          <br />
-          <span style={{ color: "var(--moon-gold)" }}>innerlijke rust</span>
-        </h1>
-
-        <p
-          className="animate-float-up"
-          style={{
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: 18,
-            color: "var(--text-muted)",
-            lineHeight: 1.7,
-            maxWidth: 520,
-            margin: "0 auto 40px",
-            animationDelay: "0.5s",
-          }}
-        >
-          Gepersonaliseerde affirmaties die meegroeien met je kind. Gebaseerd op
-          het hypnagogische venster — het moment waarop het brein het meest
-          ontvankelijk is.
-        </p>
-
-        <a
-          href="#probeer"
-          className="animate-float-up"
-          style={{
-            display: "inline-block",
-            padding: "16px 36px",
-            background: "linear-gradient(135deg, var(--moon-gold), var(--moon-light))",
-            borderRadius: 30,
-            fontFamily: "var(--font-dm-sans)",
-            fontSize: 16,
-            fontWeight: 600,
-            color: "var(--night-deep)",
-            textDecoration: "none",
-            boxShadow: "0 4px 24px rgba(240,198,122,0.3)",
-            animationDelay: "0.7s",
-          }}
-        >
-          Probeer 7 dagen gratis
-        </a>
-      </section>
-
-      {/* Leeftijdscategorieën */}
       <section
         style={{
           display: "flex",
@@ -250,7 +45,7 @@ export default function Home() {
           flexWrap: "wrap",
         }}
       >
-        {["0-2 jr", "2-4 jr", "4-7 jr", "6-10 jr"].map((age) => (
+        {["0-2 jaar", "2-4 jaar", "4-7 jaar", "6-10 jaar"].map((age) => (
           <span
             key={age}
             style={{
@@ -260,7 +55,6 @@ export default function Home() {
               fontFamily: "var(--font-dm-sans)",
               fontSize: 13,
               color: "var(--text-muted)",
-              cursor: "pointer",
             }}
           >
             {age}
@@ -268,47 +62,144 @@ export default function Home() {
         ))}
       </section>
 
-      {/* Twee-fasen model */}
       <section
         style={{
-          maxWidth: 900,
+          maxWidth: 800,
+          margin: "0 auto",
+          padding: "0 24px 80px",
+          textAlign: "center",
+        }}
+      >
+        <SectionLabel text="Waarom het werkt" />
+
+        <h2
+          style={{
+            fontFamily: "var(--font-cormorant)",
+            fontSize: "clamp(26px, 4vw, 36px)",
+            color: "var(--text-primary)",
+            fontWeight: 600,
+            marginBottom: 20,
+          }}
+        >
+          Het hypnagogische venster
+        </h2>
+
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: 16,
+            color: "var(--text-muted)",
+            lineHeight: 1.8,
+            maxWidth: 620,
+            margin: "0 auto 24px",
+          }}
+        >
+          Vlak voor het inslapen bevindt je kind zich in een bijzondere toestand:
+          het hypnagogische venster. Het bewuste denken valt weg, maar het brein
+          luistert nog steeds. Onderzoek laat zien dat het brein in deze fase tot
+          wel 95% ontvankelijker is voor positieve suggesties.
+        </p>
+
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: 16,
+            color: "var(--text-muted)",
+            lineHeight: 1.8,
+            maxWidth: 620,
+            margin: "0 auto 24px",
+          }}
+        >
+          Inner Sleep maakt gebruik van dit venster. Door op precies het juiste
+          moment liefdevolle, bevestigende woorden te laten horen, help je je
+          kind om een diep gevoel van veiligheid en eigenwaarde op te bouwen —
+          nacht na nacht, als een onzichtbare basis onder alles wat ze doen.
+        </p>
+
+        <div
+          style={{
+            padding: "20px 28px",
+            background: "var(--accent-soft)",
+            borderRadius: 14,
+            maxWidth: 500,
+            margin: "0 auto",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-cormorant)",
+              fontSize: 19,
+              color: "var(--moon-light)",
+              fontStyle: "italic",
+              lineHeight: 1.6,
+            }}
+          >
+            &ldquo;Ik ben veilig. Ik ben geliefd. Ik ben goed zoals ik ben.&rdquo;
+          </p>
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans)",
+              fontSize: 13,
+              color: "var(--text-muted)",
+              opacity: 0.6,
+              marginTop: 8,
+            }}
+          >
+            De drie kernaffirmaties van Inner Sleep
+          </p>
+        </div>
+      </section>
+
+      <PhaseSection />
+      <BenefitsSection />
+
+      <section
+        style={{
+          maxWidth: 700,
           margin: "0 auto",
           padding: "0 24px 80px",
         }}
       >
-        <p
+        <SectionLabel text="Hoe het werkt" />
+
+        <h2
           style={{
             fontFamily: "var(--font-cormorant)",
-            fontSize: 14,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "var(--moon-gold)",
-            marginBottom: 28,
+            fontSize: "clamp(26px, 4vw, 36px)",
+            color: "var(--text-primary)",
+            fontWeight: 600,
+            marginBottom: 36,
             textAlign: "center",
           }}
         >
-          Het twee-fasen model
-        </p>
+          In drie simpele stappen
+        </h2>
 
-        <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-          <PhaseCard
-            phase="Fase 1 · Inslapen"
-            title="Inslapen"
-            person="3e persoon"
-            description="Zachte stem, kind hoort dit terwijl het wegzakt. Het hypnagogische venster — maximale ontvankelijkheid."
-            affirmation="&ldquo;Emma is veilig.<br/>Emma is geliefd.<br/>Emma is goed zoals ze is.&rdquo;"
-          />
-          <PhaseCard
-            phase="Fase 2 · Lichte slaap"
-            title="Lichte slaap"
-            person="1e persoon"
-            description="Fluistertoon, werkt op het onderbewuste. Kind is in lichte slaap, brein verwerkt actief."
-            affirmation="&ldquo;Ik ben veilig.<br/>Ik ben geliefd.<br/>Ik ben goed zoals ik ben.&rdquo;"
-          />
+        <div style={{ display: "flex", gap: 20, marginBottom: 32, alignItems: "flex-start" }}>
+          <div style={{ fontFamily: "var(--font-cormorant)", fontSize: 28, color: "var(--moon-gold)", fontWeight: 600, minWidth: 44, opacity: 0.6 }}>01</div>
+          <div>
+            <h3 style={{ fontFamily: "var(--font-cormorant)", fontSize: 20, color: "var(--text-primary)", fontWeight: 600, marginBottom: 6 }}>Kies het profiel van je kind</h3>
+            <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "var(--text-muted)", lineHeight: 1.7 }}>Selecteer de leeftijdscategorie en voer de naam van je kind in. Inner Sleep past alle affirmaties automatisch aan.</p>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 20, marginBottom: 32, alignItems: "flex-start" }}>
+          <div style={{ fontFamily: "var(--font-cormorant)", fontSize: 28, color: "var(--moon-gold)", fontWeight: 600, minWidth: 44, opacity: 0.6 }}>02</div>
+          <div>
+            <h3 style={{ fontFamily: "var(--font-cormorant)", fontSize: 20, color: "var(--text-primary)", fontWeight: 600, marginBottom: 6 }}>Start de audio voor het slapengaan</h3>
+            <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "var(--text-muted)", lineHeight: 1.7 }}>Zet de audio aan via je telefoon en speel het af via een bluetooth-speaker in de kinderkamer. Jij houdt de controle.</p>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 20, marginBottom: 32, alignItems: "flex-start" }}>
+          <div style={{ fontFamily: "var(--font-cormorant)", fontSize: 28, color: "var(--moon-gold)", fontWeight: 600, minWidth: 44, opacity: 0.6 }}>03</div>
+          <div>
+            <h3 style={{ fontFamily: "var(--font-cormorant)", fontSize: 20, color: "var(--text-primary)", fontWeight: 600, marginBottom: 6 }}>Laat Inner Sleep het werk doen</h3>
+            <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "var(--text-muted)", lineHeight: 1.7 }}>De audio begeleidt je kind van inslapen naar diepe slaap met twee fases van affirmaties, begeleid door rustgevende klanken.</p>
+          </div>
         </div>
       </section>
 
-      {/* USPs */}
       <section
         style={{
           maxWidth: 600,
@@ -316,11 +207,16 @@ export default function Home() {
           padding: "0 24px 80px",
         }}
       >
+        <SectionLabel text="Kenmerken" />
+
         {[
           "Gebaseerd op het hypnagogische venster",
           "AI-gepersonaliseerd op naam van je kind",
-          "Vier leeftijdscategorieën: 0-2, 2-4, 4-7, 6-10",
-          "Automatische stop na ~30 minuten",
+          "Vier leeftijdscategorieen: 0-2, 2-4, 4-7, 6-10 jaar",
+          "Rustgevende soundscapes met solfeggio-frequenties",
+          "Draait automatisch door — ook als je kind langer wakker ligt",
+          "Jij houdt volledige controle via je telefoon",
+          "Altijd opzegbaar, zonder verplichtingen",
         ].map((usp) => (
           <div
             key={usp}
@@ -353,7 +249,8 @@ export default function Home() {
         ))}
       </section>
 
-      {/* Footer */}
+      <CTASection />
+
       <footer
         style={{
           padding: "40px 24px",
@@ -368,7 +265,7 @@ export default function Home() {
             color: "var(--text-muted)",
           }}
         >
-          Inner Start · Innerlijke veiligheid voor je kind
+          Inner Sleep · Innerlijke veiligheid voor je kind
         </p>
       </footer>
     </main>
