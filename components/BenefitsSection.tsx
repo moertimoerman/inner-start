@@ -85,24 +85,29 @@ export function BenefitsSection() {
           textAlign: "center",
         }}
       >
-        Meer dan alleen beter slapen
+        Rust in de avond, stevigheid van binnen
       </h2>
 
       <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
         <BenefitCard
-          icon="🌙"
+          icon="🌙✨"
           title="Rustiger inslapen"
-          description="Geen eindeloos gepraat meer voor het slapengaan. De zachte stem en rustgevende soundscapes helpen je kind sneller in slaap te vallen."
+          description="Een kalme stem en zachte klanklaag helpen je kind de dag los te laten en rustiger in slaap te vallen."
         />
         <BenefitCard
-          icon="🛡️"
+          icon="🌱"
           title="Meer zelfvertrouwen"
-          description="Kinderen die zich veilig voelen, durven meer. De affirmaties bouwen nacht na nacht aan een stevig fundament van eigenwaarde."
+          description="Door herhaling van warme kernboodschappen groeit een stabiel gevoel van eigenwaarde en innerlijke kracht."
         />
         <BenefitCard
-          icon="🧠"
-          title="Emotionele veerkracht"
-          description="Je kind leert onbewust dat het goed is zoals het is. Dit helpt bij faalangst, pesten, scheidingen en andere uitdagingen."
+          icon="🌊"
+          title="Innerlijke veiligheid"
+          description="De combinatie van stem en sound design ondersteunt een veilig basisgevoel dat helpt bij spanning en onrust."
+        />
+        <BenefitCard
+          icon="🕰️🌙"
+          title="Gezonde avondroutine"
+          description="Een vaste, zachte slaaproutine geeft houvast voor ouder en kind en maakt bedtijd voorspelbaar en rustiger."
         />
       </div>
     </section>

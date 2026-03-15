@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate:standard:sentences": "node scripts/generate-standard-sentences.mjs",
+    "build:audio:track": "node scripts/build-audio-track.mjs",
+    "build:female:final-track": "node scripts/render-female-final-track.mjs",
+    "build:male:final-track": "node scripts/render-male-final-track.mjs"
   },
   "dependencies": {
     "@stripe/stripe-js": "^8.9.0",

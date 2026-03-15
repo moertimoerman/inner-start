@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Cormorant_Garamond, DM_Sans, DM_Mono } from "next/font/google";
+import { MainNav } from "../components/MainNav";
+import { SiteFooter } from "../components/SiteFooter";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -25,22 +28,26 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Inner Start — Geef je kind innerlijke rust",
+  title: "Inner Sleep — Rustige en veilige slaaproutine voor kinderen",
   description:
-    "Gepersonaliseerde slaap-affirmaties die meegroeien met je kind. Gebaseerd op het hypnagogische venster.",
+    "Inner Sleep helpt kinderen rustiger in slaap te vallen en van binnen steviger te worden, met kalme gesproken suggesties, slim sound design en een veilige slaaproutine.",
 };
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <html
       lang="nl"
       className={`${cormorant.variable} ${dmSans.variable} ${dmMono.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        <MainNav />
+        {children}
+        <SiteFooter />
+      </body>
     </html>
   );
 }

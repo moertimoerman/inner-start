@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+type HomeVariant = "A" | "B";
 
 function Moon() {
   return (
@@ -20,7 +21,24 @@ function Moon() {
   );
 }
 
-export function Hero() {
+export function Hero({ variant }: { variant: HomeVariant }) {
+  async function trackStartTrialClick() {
+    try {
+      await fetch("/api/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event: "cta_start_gratis_proef_click",
+          variant,
+          path: "/",
+        }),
+        keepalive: true,
+      });
+    } catch {
+      // Ignore tracking failures.
+    }
+  }
+
   return (
     <section
       style={{
@@ -87,30 +105,58 @@ export function Hero() {
           animationDelay: "0.5s",
         }}
       >
-        Wetenschappelijk onderbouwde slaap-affirmaties die het zelfvertrouwen
-        van je kind versterken — precies op het moment dat het brein het meest
-        ontvankelijk is.
+        Inner Sleep helpt kinderen rustiger in slaap te vallen en van binnen
+        steviger te worden, met kalme gesproken suggesties, slim sound design
+        en een veilige slaaproutine.
       </p>
 
-      <Link
-        href="/pricing"
+      <div
         className="animate-float-up"
         style={{
-          display: "inline-block",
-          padding: "16px 36px",
-          background: "linear-gradient(135deg, var(--moon-gold), var(--moon-light))",
-          borderRadius: 30,
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: 16,
-          fontWeight: 600,
-          color: "var(--night-deep)",
-          textDecoration: "none",
-          boxShadow: "0 4px 24px rgba(240,198,122,0.3)",
+          display: "flex",
+          justifyContent: "center",
+          gap: 12,
+          flexWrap: "wrap",
           animationDelay: "0.7s",
         }}
       >
-        Probeer 7 dagen gratis
-      </Link>
+        <Link
+          href="/pricing"
+          onClick={trackStartTrialClick}
+          style={{
+            display: "inline-block",
+            padding: "16px 36px",
+            background:
+              "linear-gradient(135deg, var(--moon-gold), var(--moon-light))",
+            borderRadius: 30,
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: 16,
+            fontWeight: 600,
+            color: "var(--night-deep)",
+            textDecoration: "none",
+            boxShadow: "0 4px 24px rgba(240,198,122,0.3)",
+          }}
+        >
+          Start gratis proef
+        </Link>
+        <Link
+          href="/app"
+          style={{
+            display: "inline-block",
+            padding: "16px 24px",
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(240,198,122,0.35)",
+            borderRadius: 30,
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: 16,
+            fontWeight: 600,
+            color: "var(--text-primary)",
+            textDecoration: "none",
+          }}
+        >
+          Open Inner Sleep
+        </Link>
+      </div>
 
       <p
         className="animate-float-up"
@@ -120,6 +166,20 @@ export function Hero() {
           color: "var(--text-muted)",
           opacity: 0.6,
           marginTop: 14,
+          animationDelay: "0.9s",
+        }}
+      >
+        Een rustig luistermoment voor het slapengaan - zonder schermtijd
+      </p>
+
+      <p
+        className="animate-float-up"
+        style={{
+          fontFamily: "var(--font-dm-sans)",
+          fontSize: 13,
+          color: "var(--text-muted)",
+          opacity: 0.6,
+          marginTop: 6,
           animationDelay: "0.9s",
         }}
       >

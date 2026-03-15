@@ -1,94 +1,303 @@
 'use client'
 
-import { useState } from 'react'
+import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '../../utils/supabase-browser'
+import { PLAN_DISPLAY, getPriceId, type PlanKey } from '../lib/pricing-plans'
 
 export default function PricingPage() {
   const supabase = createClient()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState('')
   const [yearly, setYearly] = useState(false)
+  const [autoTriggered, setAutoTriggered] = useState(false)
+  const [checkoutError, setCheckoutError] = useState('')
 
-  const handleCheckout = async (priceId: string) => {
-    setLoading(priceId)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      window.location.href = '/login'
+  const standardPriceId = useMemo(() => getPriceId('standard', yearly), [yearly])
+  const premiumPriceId = useMemo(() => getPriceId('premium', yearly), [yearly])
+
+  const startCheckout = async (priceId: string, auto = false) => {
+    setCheckoutError('')
+
+    if (!priceId) {
+      setCheckoutError('Prijsconfig ontbreekt. Checkout kon niet starten.')
       return
     }
+
+    setLoading(priceId)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      const next = `/pricing?checkout=1&price=${encodeURIComponent(priceId)}`
+      window.location.href = `/login?next=${encodeURIComponent(next)}`
+      return
+    }
+
     try {
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId, email: user.email }),
+        body: JSON.stringify({ priceId, email: user.email, userId: user.id }),
       })
-      const { url, error } = await response.json()
-      if (error) {
-        alert(error)
+
+      const raw = await response.text()
+      let payload: { url?: string; error?: string } = {}
+      try {
+        payload = raw ? JSON.parse(raw) : {}
+      } catch {
+        payload = { error: raw || `Onverwachte response (${response.status})` }
+      }
+
+      if (!response.ok || payload.error || !payload.url) {
+        const message =
+          payload.error ||
+          `Checkout endpoint gaf status ${response.status} zonder URL terug.`
+        setCheckoutError(`Checkout fout via /api/checkout: ${message}`)
         setLoading('')
         return
       }
-      window.location.href = url
-    } catch {
-      alert('Er ging iets mis. Probeer het opnieuw.')
+
+      window.location.href = payload.url
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : auto
+            ? 'Automatische checkout start mislukte.'
+            : 'Er ging iets mis bij checkout.'
+      setCheckoutError(`Checkout fout via /api/checkout: ${message}`)
       setLoading('')
     }
   }
 
-  const standardPrice = yearly
-    ? process.env.NEXT_PUBLIC_STRIPE_PRICE_STANDARD_YEARLY
-    : process.env.NEXT_PUBLIC_STRIPE_PRICE_STANDARD_MONTHLY
-  const premiumPrice = yearly
-    ? process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_YEARLY
-    : process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_MONTHLY
+  useEffect(() => {
+    const shouldCheckout = searchParams.get('checkout') === '1'
+    const priceFromQuery = searchParams.get('price')
+    if (!shouldCheckout || !priceFromQuery || autoTriggered) return
+    setAutoTriggered(true)
+    void startCheckout(priceFromQuery, true)
+  }, [searchParams, autoTriggered])
+
+  function PlanCard({ plan }: { plan: PlanKey }) {
+    const display = PLAN_DISPLAY[plan]
+    const priceId = plan === 'standard' ? standardPriceId : premiumPriceId
+    const isLoading = loading === priceId
+
+    return (
+      <div
+        style={{
+          background: 'rgba(255,255,255,0.05)',
+          borderRadius: '16px',
+          padding: '32px',
+          width: '320px',
+          border:
+            plan === 'premium'
+              ? '1px solid rgba(240,198,122,0.4)'
+              : '1px solid rgba(240,198,122,0.15)',
+          position: 'relative',
+        }}
+      >
+        {plan === 'premium' ? (
+          <div
+            style={{
+              position: 'absolute',
+              top: '-12px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'linear-gradient(135deg, #f0c67a, #f5dca8)',
+              color: '#0d0d2b',
+              padding: '4px 16px',
+              borderRadius: '12px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+            }}
+          >
+            Meest gekozen
+          </div>
+        ) : null}
+
+        <h2
+          style={{
+            fontFamily: 'Cormorant Garamond, serif',
+            fontSize: '24px',
+            color: plan === 'premium' ? '#f0c67a' : '#f5dca8',
+            marginBottom: '8px',
+          }}
+        >
+          {display.name}
+        </h2>
+        <p
+          style={{
+            color: '#f5dca8',
+            opacity: 0.6,
+            fontSize: '14px',
+            marginBottom: '24px',
+          }}
+        >
+          {display.subtitle}
+        </p>
+
+        <div style={{ marginBottom: '24px' }}>
+          <span style={{ fontSize: '40px', color: '#f0c67a', fontWeight: 'bold' }}>
+            {yearly ? display.yearlyPriceLabel : display.monthlyPriceLabel}
+          </span>
+          <span style={{ color: '#f5dca8', opacity: 0.6 }}>
+            {yearly ? display.yearlySuffix : display.monthlySuffix}
+          </span>
+        </div>
+
+        <ul style={{ listStyle: 'none', padding: 0, marginBottom: '32px', textAlign: 'left' }}>
+          {display.features.map((item) => (
+            <li
+              key={item}
+              style={{
+                color: '#f5dca8',
+                padding: '8px 0',
+                fontSize: '14px',
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+              }}
+            >
+              ✦ {item}
+            </li>
+          ))}
+        </ul>
+
+        <button
+          onClick={() => void startCheckout(priceId || '')}
+          disabled={isLoading}
+          style={{
+            width: '100%',
+            padding: '14px',
+            borderRadius: '8px',
+            border:
+              plan === 'premium' ? 'none' : '1px solid rgba(240,198,122,0.4)',
+            background:
+              plan === 'premium'
+                ? 'linear-gradient(135deg, #f0c67a, #f5dca8)'
+                : 'transparent',
+            color: plan === 'premium' ? '#0d0d2b' : '#f0c67a',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+          }}
+        >
+          {isLoading ? 'Even wachten...' : 'Start gratis proefperiode'}
+        </button>
+      </div>
+    )
+  }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom, #0d0d2b, #1a1a3e)', padding: '60px 20px' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(to bottom, #0d0d2b, #1a1a3e)',
+        padding: '60px 20px',
+      }}
+    >
       <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '40px', color: '#f0c67a', marginBottom: '8px' }}>Inner Sleep</h1>
-        <p style={{ color: '#f5dca8', fontSize: '16px', marginBottom: '40px', opacity: 0.8 }}>Geef je kind een goede start — iedere nacht opnieuw</p>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '40px' }}>
-          <span style={{ color: !yearly ? '#f0c67a' : '#f5dca8', opacity: !yearly ? 1 : 0.5 }}>Maandelijks</span>
-          <div onClick={() => setYearly(!yearly)} style={{ width: '52px', height: '28px', borderRadius: '14px', background: yearly ? '#f0c67a' : 'rgba(255,255,255,0.2)', cursor: 'pointer', position: 'relative', transition: 'background 0.3s' }}>
-            <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#0d0d2b', position: 'absolute', top: '3px', left: yearly ? '27px' : '3px', transition: 'left 0.3s' }} />
+        <h1
+          style={{
+            fontFamily: 'Cormorant Garamond, serif',
+            fontSize: '40px',
+            color: '#f0c67a',
+            marginBottom: '8px',
+          }}
+        >
+          Inner Sleep
+        </h1>
+        <p style={{ color: '#f5dca8', fontSize: '16px', marginBottom: '40px', opacity: 0.8 }}>
+          Geef je kind een goede start — iedere nacht opnieuw
+        </p>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            marginBottom: '40px',
+          }}
+        >
+          <span style={{ color: !yearly ? '#f0c67a' : '#f5dca8', opacity: !yearly ? 1 : 0.5 }}>
+            Maandelijks
+          </span>
+          <div
+            onClick={() => setYearly(!yearly)}
+            style={{
+              width: '52px',
+              height: '28px',
+              borderRadius: '14px',
+              background: yearly ? '#f0c67a' : 'rgba(255,255,255,0.2)',
+              cursor: 'pointer',
+              position: 'relative',
+              transition: 'background 0.3s',
+            }}
+          >
+            <div
+              style={{
+                width: '22px',
+                height: '22px',
+                borderRadius: '50%',
+                background: '#0d0d2b',
+                position: 'absolute',
+                top: '3px',
+                left: yearly ? '27px' : '3px',
+                transition: 'left 0.3s',
+              }}
+            />
           </div>
-          <span style={{ color: yearly ? '#f0c67a' : '#f5dca8', opacity: yearly ? 1 : 0.5 }}>Jaarlijks</span>
-          {yearly && <span style={{ background: 'rgba(240,198,122,0.2)', color: '#f0c67a', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>Bespaar 33%</span>}
+          <span style={{ color: yearly ? '#f0c67a' : '#f5dca8', opacity: yearly ? 1 : 0.5 }}>
+            Jaarlijks
+          </span>
+          {yearly ? (
+            <span
+              style={{
+                background: 'rgba(240,198,122,0.2)',
+                color: '#f0c67a',
+                padding: '4px 10px',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+              }}
+            >
+              Bespaar 33%
+            </span>
+          ) : null}
         </div>
+
         <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '16px', padding: '32px', width: '320px', border: '1px solid rgba(240,198,122,0.15)' }}>
-            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '24px', color: '#f5dca8', marginBottom: '8px' }}>Standard</h2>
-            <p style={{ color: '#f5dca8', opacity: 0.6, fontSize: '14px', marginBottom: '24px' }}>Alle basis-affirmaties</p>
-            <div style={{ marginBottom: '24px' }}>
-              <span style={{ fontSize: '40px', color: '#f0c67a', fontWeight: 'bold' }}>{yearly ? '39,99' : '4,99'}</span>
-              <span style={{ color: '#f5dca8', opacity: 0.6 }}>{yearly ? '/jaar' : '/maand'}</span>
-            </div>
-            <ul style={{ listStyle: 'none', padding: 0, marginBottom: '32px', textAlign: 'left' }}>
-              {['Twee-fase slaapmodel', 'Alle leeftijdsgroepen', 'Rustgevende soundscapes', '7 dagen gratis proberen'].map((item) => (
-                <li key={item} style={{ color: '#f5dca8', padding: '8px 0', fontSize: '14px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>✦ {item}</li>
-              ))}
-            </ul>
-            <button onClick={() => handleCheckout(standardPrice || '')} disabled={loading === standardPrice} style={{ width: '100%', padding: '14px', borderRadius: '8px', border: '1px solid rgba(240,198,122,0.4)', background: 'transparent', color: '#f0c67a', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>
-              {loading === standardPrice ? 'Even wachten...' : 'Start gratis proefperiode'}
-            </button>
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '16px', padding: '32px', width: '320px', border: '1px solid rgba(240,198,122,0.4)', position: 'relative' }}>
-            <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, #f0c67a, #f5dca8)', color: '#0d0d2b', padding: '4px 16px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>Meest gekozen</div>
-            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '24px', color: '#f0c67a', marginBottom: '8px' }}>Personal</h2>
-            <p style={{ color: '#f5dca8', opacity: 0.6, fontSize: '14px', marginBottom: '24px' }}>Gepersonaliseerd voor jouw kind</p>
-            <div style={{ marginBottom: '24px' }}>
-              <span style={{ fontSize: '40px', color: '#f0c67a', fontWeight: 'bold' }}>{yearly ? '79,99' : '9,99'}</span>
-              <span style={{ color: '#f5dca8', opacity: 0.6 }}>{yearly ? '/jaar' : '/maand'}</span>
-            </div>
-            <ul style={{ listStyle: 'none', padding: 0, marginBottom: '32px', textAlign: 'left' }}>
-              {['Alles van Standard', 'Naam van je kind in affirmaties', "Keuze uit thema's", 'AI-gepersonaliseerde content', '7 dagen gratis proberen'].map((item) => (
-                <li key={item} style={{ color: '#f5dca8', padding: '8px 0', fontSize: '14px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>✦ {item}</li>
-              ))}
-            </ul>
-            <button onClick={() => handleCheckout(premiumPrice || '')} disabled={loading === premiumPrice} style={{ width: '100%', padding: '14px', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #f0c67a, #f5dca8)', color: '#0d0d2b', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>
-              {loading === premiumPrice ? 'Even wachten...' : 'Start gratis proefperiode'}
-            </button>
-          </div>
+          <PlanCard plan='standard' />
+          <PlanCard plan='premium' />
         </div>
+
+        {checkoutError ? (
+          <p
+            style={{
+              marginTop: '16px',
+              color: '#fca5a5',
+              fontSize: '13px',
+              lineHeight: 1.6,
+            }}
+          >
+            {checkoutError}
+          </p>
+        ) : null}
+
+        <p style={{ marginTop: '26px', color: '#f5dca8', opacity: 0.75, fontSize: '13px' }}>
+          Door verder te gaan ga je akkoord met{' '}
+          <Link href='/voorwaarden' style={{ color: '#f5dca8' }}>
+            Voorwaarden
+          </Link>{' '}
+          en{' '}
+          <Link href='/privacy' style={{ color: '#f5dca8' }}>
+            Privacy
+          </Link>
+          .
+        </p>
       </div>
     </div>
   )

@@ -36,23 +36,50 @@ export function CTASection() {
         doet voor het zelfvertrouwen van je kind.
       </p>
 
-      <Link
-        href="/pricing"
+      <div
         style={{
-          display: "inline-block",
-          padding: "16px 36px",
-          background: "linear-gradient(135deg, var(--moon-gold), var(--moon-light))",
-          borderRadius: 30,
-          fontFamily: "var(--font-dm-sans)",
-          fontSize: 16,
-          fontWeight: 600,
-          color: "var(--night-deep)",
-          textDecoration: "none",
-          boxShadow: "0 4px 24px rgba(240,198,122,0.3)",
+          display: "flex",
+          justifyContent: "center",
+          gap: 12,
+          flexWrap: "wrap",
         }}
       >
-        Bekijk abonnementen
-      </Link>
+        <Link
+          href="/pricing"
+          style={{
+            display: "inline-block",
+            padding: "16px 36px",
+            background:
+              "linear-gradient(135deg, var(--moon-gold), var(--moon-light))",
+            borderRadius: 30,
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: 16,
+            fontWeight: 600,
+            color: "var(--night-deep)",
+            textDecoration: "none",
+            boxShadow: "0 4px 24px rgba(240,198,122,0.3)",
+          }}
+        >
+          Bekijk abonnementen
+        </Link>
+        <Link
+          href="/app"
+          style={{
+            display: "inline-block",
+            padding: "16px 24px",
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(240,198,122,0.35)",
+            borderRadius: 30,
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: 16,
+            fontWeight: 600,
+            color: "var(--text-primary)",
+            textDecoration: "none",
+          }}
+        >
+          Open Inner Sleep
+        </Link>
+      </div>
 
       <p
         style={{

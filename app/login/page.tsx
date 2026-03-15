@@ -1,10 +1,13 @@
 'use client'
 
+import Link from 'next/link'
 import { createClient } from '../../utils/supabase-browser'
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 export default function LoginPage() {
   const supabase = createClient()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
@@ -21,7 +24,8 @@ export default function LoginPage() {
       if (error) {
         setMessage(error.message)
       } else {
-        window.location.href = '/'
+        const next = searchParams.get('next') || '/dashboard'
+        window.location.href = next
       }
     } else {
       const { error } = await supabase.auth.signUp({ email, password })
@@ -99,7 +103,7 @@ export default function LoginPage() {
             style={{
               width: '100%',
               padding: '12px 16px',
-              marginBottom: '24px',
+              marginBottom: '10px',
               borderRadius: '8px',
               border: '1px solid rgba(240,198,122,0.3)',
               background: 'rgba(255,255,255,0.05)',
@@ -109,6 +113,23 @@ export default function LoginPage() {
               boxSizing: 'border-box' as const,
             }}
           />
+          {isLogin ? (
+            <div style={{ textAlign: 'right', marginBottom: '20px' }}>
+              <Link
+                href='/wachtwoord-vergeten'
+                style={{
+                  color: '#f5dca8',
+                  fontSize: '12px',
+                  opacity: 0.85,
+                  textDecoration: 'none',
+                }}
+              >
+                Wachtwoord vergeten?
+              </Link>
+            </div>
+          ) : (
+            <div style={{ marginBottom: '20px' }} />
+          )}
           <button
             type="submit"
             disabled={loading}
@@ -152,6 +173,18 @@ export default function LoginPage() {
           }}
         >
           {isLogin ? 'Nog geen account? Registreer hier' : 'Al een account? Log in'}
+        </p>
+
+        <p style={{ marginTop: '14px', textAlign: 'center', color: '#f5dca8', opacity: 0.7, fontSize: '12px' }}>
+          Met doorgaan ga je akkoord met{' '}
+          <Link href='/voorwaarden' style={{ color: '#f5dca8' }}>
+            Voorwaarden
+          </Link>{' '}
+          en{' '}
+          <Link href='/privacy' style={{ color: '#f5dca8' }}>
+            Privacy
+          </Link>
+          .
         </p>
       </div>
     </div>
