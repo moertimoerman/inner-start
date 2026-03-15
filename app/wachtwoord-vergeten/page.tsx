@@ -5,7 +5,6 @@ import { useState } from "react";
 import { createClient } from "../../utils/supabase-browser";
 
 export default function ForgotPasswordPage() {
-  const supabase = createClient();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -21,6 +20,7 @@ export default function ForgotPasswordPage() {
       typeof window !== "undefined"
         ? `${window.location.origin}/reset-wachtwoord`
         : undefined;
+    const supabase = createClient();
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,

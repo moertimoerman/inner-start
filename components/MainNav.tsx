@@ -16,10 +16,18 @@ const LINKS = [
 
 export function MainNav() {
   const pathname = usePathname();
-  const supabase = createClient();
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    ) {
+      return;
+    }
+
+    const supabase = createClient();
     let mounted = true;
 
     async function loadUser() {
@@ -40,7 +48,7 @@ export function MainNav() {
       mounted = false;
       listener.subscription.unsubscribe();
     };
-  }, [supabase.auth]);
+  }, []);
 
   return (
     <header

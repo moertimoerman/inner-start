@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { createClient } from "../../utils/supabase-browser";
 
 export default function ResetPasswordPage() {
-  const supabase = createClient();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,6 +16,7 @@ export default function ResetPasswordPage() {
     let mounted = true;
 
     async function initRecoverySession() {
+      const supabase = createClient();
       setError("");
 
       const url = new URL(window.location.href);
@@ -58,7 +58,7 @@ export default function ResetPasswordPage() {
     return () => {
       mounted = false;
     };
-  }, [supabase.auth]);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -74,6 +74,7 @@ export default function ResetPasswordPage() {
     setLoading(true);
     setError("");
     setMessage("");
+    const supabase = createClient();
 
     const { error: updateError } = await supabase.auth.updateUser({ password });
 

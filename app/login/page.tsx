@@ -6,7 +6,6 @@ import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 export default function LoginPage() {
-  const supabase = createClient()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -18,6 +17,7 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setMessage('')
+    const supabase = createClient()
 
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password })

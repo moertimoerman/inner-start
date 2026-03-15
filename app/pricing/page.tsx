@@ -7,7 +7,6 @@ import { createClient } from '../../utils/supabase-browser'
 import { PLAN_DISPLAY, getPriceId, type PlanKey } from '../lib/pricing-plans'
 
 export default function PricingPage() {
-  const supabase = createClient()
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState('')
   const [yearly, setYearly] = useState(false)
@@ -26,6 +25,7 @@ export default function PricingPage() {
     }
 
     setLoading(priceId)
+    const supabase = createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
