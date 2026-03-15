@@ -2,12 +2,10 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { createClient } from '../../utils/supabase-browser'
 import { PLAN_DISPLAY, getPriceId, type PlanKey } from '../lib/pricing-plans'
 
 export default function PricingPage() {
-  const searchParams = useSearchParams()
   const [loading, setLoading] = useState('')
   const [yearly, setYearly] = useState(false)
   const [autoTriggered, setAutoTriggered] = useState(false)
@@ -74,12 +72,14 @@ export default function PricingPage() {
   }
 
   useEffect(() => {
-    const shouldCheckout = searchParams.get('checkout') === '1'
-    const priceFromQuery = searchParams.get('price')
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const shouldCheckout = params.get('checkout') === '1'
+    const priceFromQuery = params.get('price')
     if (!shouldCheckout || !priceFromQuery || autoTriggered) return
     setAutoTriggered(true)
     void startCheckout(priceFromQuery, true)
-  }, [searchParams, autoTriggered])
+  }, [autoTriggered])
 
   function PlanCard({ plan }: { plan: PlanKey }) {
     const display = PLAN_DISPLAY[plan]

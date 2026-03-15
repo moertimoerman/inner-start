@@ -3,10 +3,8 @@
 import Link from 'next/link'
 import { createClient } from '../../utils/supabase-browser'
 import { useState } from 'react'
-import { useSearchParams } from 'next/navigation'
 
 export default function LoginPage() {
-  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
@@ -24,7 +22,10 @@ export default function LoginPage() {
       if (error) {
         setMessage(error.message)
       } else {
-        const next = searchParams.get('next') || '/dashboard'
+        const next =
+          typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('next') || '/dashboard'
+            : '/dashboard'
         window.location.href = next
       }
     } else {
