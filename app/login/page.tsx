@@ -15,28 +15,46 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setMessage('')
-    const supabase = createClient()
 
-    if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        setMessage(error.message)
-      } else {
-        const next =
-          typeof window !== 'undefined'
-            ? new URLSearchParams(window.location.search).get('next') || '/dashboard'
-            : '/dashboard'
-        window.location.href = next
+    try {
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        setMessage(
+          'Inloggen kan nu niet starten: Supabase configuratie ontbreekt op de server (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY).'
+        )
+        return
       }
-    } else {
-      const { error } = await supabase.auth.signUp({ email, password })
-      if (error) {
-        setMessage(error.message)
+
+      const supabase = createClient()
+
+      if (isLogin) {
+        const signInPromise = supabase.auth.signInWithPassword({ email, password })
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Login timeout na 15 seconden. Probeer opnieuw.')), 15000)
+        )
+        const { error } = await Promise.race([signInPromise, timeoutPromise])
+        if (error) {
+          setMessage(error.message)
+        } else {
+          const next =
+            typeof window !== 'undefined'
+              ? new URLSearchParams(window.location.search).get('next') || '/dashboard'
+              : '/dashboard'
+          window.location.href = next
+        }
       } else {
-        setMessage('Check je email om je account te bevestigen!')
+        const { error } = await supabase.auth.signUp({ email, password })
+        if (error) {
+          setMessage(error.message)
+        } else {
+          setMessage('Check je email om je account te bevestigen!')
+        }
       }
+    } catch (err) {
+      const text = err instanceof Error ? err.message : 'Onbekende fout bij inloggen.'
+      setMessage(text)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (

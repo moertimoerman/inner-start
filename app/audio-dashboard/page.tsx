@@ -470,7 +470,7 @@ export default function AudioDashboardPage() {
         {error ? <p style={{ color: "#fca5a5" }}>{error}</p> : null}
 
         <audio ref={voiceAudioRef} preload="none" />
-        <audio ref={musicAudioRef} src="/audio/ambience.mp3" preload="auto" />
+        <audio ref={musicAudioRef} src="/audio/ambience.m4a" preload="auto" />
         <audio ref={breathingAudioRef} src={DEFAULT_BREATHING_LAYER_SRC} preload="auto" />
       </div>
     </main>

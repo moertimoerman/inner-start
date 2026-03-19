@@ -16,12 +16,12 @@ export const STANDARD_VOICE_CONFIGS: StandardVoiceConfig[] = [
   {
     id: "female",
     label: "Vrouwenstem",
-    standardSrc: "/audio/build/female-final/outputs/female-full-100-with-themed-silence.m4a",
+    standardSrc: "/audio/standard/female.m4a",
   },
   {
     id: "male",
     label: "Mannenstem",
-    standardSrc: "/audio/build/male-final/outputs/male-full-100-with-themed-silence.m4a",
+    standardSrc: "/audio/standard/male.m4a",
   },
 ];
 

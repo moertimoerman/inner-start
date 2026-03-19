@@ -26,8 +26,8 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 Standard playback does not require runtime TTS. It reuses pre-generated files:
 
-- `public/audio/standard/female.mp3`
-- `public/audio/standard/male.mp3`
+- `public/audio/build/female-final/outputs/female-full-100-with-themed-silence.m4a`
+- `public/audio/build/male-final/outputs/male-full-100-with-themed-silence.m4a`
 
 If one of these files is missing, the player shows a clear error and logs the missing path in the console.
 
@@ -54,14 +54,24 @@ Server-only (must never be exposed in frontend code):
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `ELEVENLABS_API_KEY`
 - `POSTHOG_API_KEY` (if used)
+- `GA4_MEASUREMENT_ID` (if server-side GA4 mirror is used)
+- `GA4_API_SECRET` (if server-side GA4 mirror is used)
 
 Public (safe as `NEXT_PUBLIC_*`):
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID` (if GA4 browser tracking is used)
 
-Stripe live price IDs are managed in code:
+Stripe price source of truth:
 - `app/lib/pricing.ts`
+- defaults in code + optional env overrides:
+  - `NEXT_PUBLIC_STRIPE_PRICE_STANDARD_MONTHLY`
+  - `NEXT_PUBLIC_STRIPE_PRICE_STANDARD_YEARLY`
+  - `NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_MONTHLY`
+  - `NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_YEARLY`
+
+Current expected live IDs:
 - `standardMonthly: price_1T81EPEIKNTfmVDvzEjkTbyU`
 - `standardYearly: price_1T80uMEIKNTfmVDv2G8gyfxC`
 - `premiumMonthly: price_1TAqkwEIKNTfmVDvogD3VUzS`

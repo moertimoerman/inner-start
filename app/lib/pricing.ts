@@ -1,10 +1,31 @@
-export const STRIPE_PRODUCT_ID = "prod_U5WgoaUZStCU0d";
+export const STRIPE_PRODUCT_ID = "prod_U9AdVp3p2DsXAt";
 
+const DEFAULT_PRICES = {
+  standardMonthly: "price_1TAsIPEIVa7nIrkaPOAbHTSk",
+  standardYearly: "price_1TAsIQEIVa7nIrkaeZ2N3Olp",
+  premiumMonthly: "price_1TAsIOEIVa7nIrkaif5wWa0E",
+  premiumYearly: "price_1TAsILEIVa7nIrkaKLSgxKCj",
+} as const;
+
+// Single source of truth for both client and server.
+// Price IDs are public identifiers and can safely use NEXT_PUBLIC env overrides.
 export const PRICES = {
-  standardMonthly: "price_1T81EPEIKNTfmVDvzEjkTbyU",
-  standardYearly: "price_1T80uMEIKNTfmVDv2G8gyfxC",
-  premiumMonthly: "price_1TAqkwEIKNTfmVDvogD3VUzS",
-  premiumYearly: "price_1TAqpiEIKNTfmVDvVD3zgiak",
+  standardMonthly:
+    process.env.NEXT_PUBLIC_STRIPE_PRICE_STANDARD_MONTHLY ||
+    process.env.STRIPE_PRICE_STANDARD_MONTHLY ||
+    DEFAULT_PRICES.standardMonthly,
+  standardYearly:
+    process.env.NEXT_PUBLIC_STRIPE_PRICE_STANDARD_YEARLY ||
+    process.env.STRIPE_PRICE_STANDARD_YEARLY ||
+    DEFAULT_PRICES.standardYearly,
+  premiumMonthly:
+    process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_MONTHLY ||
+    process.env.STRIPE_PRICE_PREMIUM_MONTHLY ||
+    DEFAULT_PRICES.premiumMonthly,
+  premiumYearly:
+    process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_YEARLY ||
+    process.env.STRIPE_PRICE_PREMIUM_YEARLY ||
+    DEFAULT_PRICES.premiumYearly,
 } as const;
 
 export type PlanKey = "standard" | "premium";

@@ -35,7 +35,7 @@ export const AUDIO_LAYER_PLAN: Record<AudioLayer, { description: string }> = {
   },
 };
 
-export const MUSIC_LAYER_SRC = "/audio/ambience.mp3";
+export const MUSIC_LAYER_SRC = "/audio/ambience.m4a";
 
 export const BREATHING_LAYER_FILES = [
   "/audio/breathing/breathing-01.m4a",

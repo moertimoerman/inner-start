@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Cormorant_Garamond, DM_Sans, DM_Mono } from "next/font/google";
 import { MainNav } from "../components/MainNav";
 import { SiteFooter } from "../components/SiteFooter";
+import { GaScripts } from "../components/GaScripts";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -44,6 +45,7 @@ export default function RootLayout({
       className={`${cormorant.variable} ${dmSans.variable} ${dmMono.variable}`}
     >
       <body>
+        <GaScripts />
         <MainNav />
         {children}
         <SiteFooter />

@@ -208,8 +208,8 @@ export default async function Home() {
         <div style={{ display: "flex", gap: 20, marginBottom: 32, alignItems: "flex-start" }}>
           <div style={{ fontFamily: "var(--font-cormorant)", fontSize: 28, color: "var(--moon-gold)", fontWeight: 600, minWidth: 44, opacity: 0.6 }}>01</div>
           <div>
-            <h3 style={{ fontFamily: "var(--font-cormorant)", fontSize: 20, color: "var(--text-primary)", fontWeight: 600, marginBottom: 6 }}>Kies het profiel van je kind</h3>
-            <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "var(--text-muted)", lineHeight: 1.7 }}>Selecteer de leeftijdscategorie en voer de naam van je kind in. Inner Sleep past de kernboodschappen automatisch aan.</p>
+            <h3 style={{ fontFamily: "var(--font-cormorant)", fontSize: 20, color: "var(--text-primary)", fontWeight: 600, marginBottom: 6 }}>Kies een stem en rustige mix</h3>
+            <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, color: "var(--text-muted)", lineHeight: 1.7 }}>Kies de vrouwenstem of mannenstem en stel een zachte audiobalans in die past bij de avondroutine van je kind.</p>
           </div>
         </div>
 

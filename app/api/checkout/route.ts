@@ -18,8 +18,30 @@ function getStripeClient(): Stripe | null {
   return stripeClient
 }
 
+function getKeyMode(secretKey: string | undefined) {
+  if (!secretKey) return 'missing'
+  if (secretKey.startsWith('sk_live_')) return 'live'
+  if (secretKey.startsWith('sk_test_')) return 'test'
+  return 'unknown'
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const secretKey = process.env.STRIPE_SECRET_KEY
+    const keyMode = getKeyMode(secretKey)
+
+    if (process.env.NODE_ENV === 'production' && keyMode === 'test') {
+      console.error('CHECKOUT_KEY_MODE_ERROR: production draait met sk_test key.')
+      return NextResponse.json(
+        {
+          error:
+            'Checkout staat op Stripe TEST mode. Zet in Vercel STRIPE_SECRET_KEY op een sk_live sleutel.',
+          keyMode,
+        },
+        { status: 500 }
+      )
+    }
+
     const stripe = getStripeClient()
     if (!stripe) {
       console.error('CHECKOUT_CONFIG_ERROR: STRIPE_SECRET_KEY ontbreekt.')
@@ -76,10 +98,22 @@ export async function POST(request: NextRequest) {
       properties: {
         priceId,
         sourcePath: '/pricing',
+        stripeSessionLiveMode: session.livemode,
+        stripeKeyMode: keyMode,
       },
     })
 
-    return NextResponse.json({ url: session.url })
+    // Temporary debug payload for launch validation.
+    return NextResponse.json({
+      url: session.url,
+      debug: {
+        priceId,
+        liveMode: session.livemode,
+        keyMode,
+        checkoutMode: 'subscription',
+        usesSetupIntentFlow: false,
+      },
+    })
   } catch (error) {
     console.error('Stripe error:', error)
     const stripeMessage =

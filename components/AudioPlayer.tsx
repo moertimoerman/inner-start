@@ -396,7 +396,7 @@ export default function AudioPlayer({
         onEnded={handleVoiceEnded}
         onError={handleVoiceError}
       />
-      <audio ref={ambienceRef} src="/audio/ambience.mp3" />
+      <audio ref={ambienceRef} src="/audio/ambience.m4a" />
       <audio ref={breathingRef} src={DEFAULT_BREATHING_LAYER_SRC} />
     </div>
   );

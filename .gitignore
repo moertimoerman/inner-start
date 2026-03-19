@@ -40,3 +40,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local orchestration repo (separate project)
+/swarm/
+
+# Generated or oversized audio artifacts (keep local, do not track)
+/public/audio/build/
+/public/audio/standard/sentences/
+/public/audio/ambience.mp3
+/public/audio/standard/*.mp3
+/public/audio/standard/*-with-silence*.m4a
+/public/audio/**/*.wav
