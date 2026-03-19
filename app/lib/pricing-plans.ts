@@ -1,4 +1,4 @@
-import { getPriceId as getStripePriceId, type PlanKey } from "./pricing";
+import type { PlanKey } from "./pricing";
 
 export type { PlanKey };
 
@@ -32,7 +32,3 @@ export const PLAN_DISPLAY = {
     ],
   },
 } as const;
-
-export function getPriceId(plan: PlanKey, yearly: boolean) {
-  return getStripePriceId(plan, yearly ? "yearly" : "monthly");
-}

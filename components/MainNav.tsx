@@ -9,7 +9,6 @@ const LINKS = [
   { href: "/", label: "Home" },
   { href: "/pricing", label: "Abonnement" },
   { href: "/app", label: "Open Inner Sleep" },
-  { href: "/audio-dashboard", label: "Audio Dashboard" },
   { href: "/setup", label: "Instellingen" },
   { href: "/dashboard", label: "Account" },
 ];

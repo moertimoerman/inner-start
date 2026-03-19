@@ -25,6 +25,14 @@ function clipKey(voiceSet: VoiceSet, person: PersonType, topic: TopicType, index
 }
 
 export default function AudioDashboardPage() {
+  if (process.env.NODE_ENV === "production") {
+    return (
+      <main style={{ minHeight: "100vh", padding: "40px 20px", color: "#f5dca8" }}>
+        Deze testpagina is alleen beschikbaar in lokale development.
+      </main>
+    );
+  }
+
   const [voiceSet, setVoiceSet] = useState<VoiceSet>("female");
   const [person, setPerson] = useState<PersonType>("1");
   const [topic, setTopic] = useState<TopicType>("Safe");

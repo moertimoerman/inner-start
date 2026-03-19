@@ -1,35 +1,29 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '../../utils/supabase-browser'
-import { PLAN_DISPLAY, getPriceId, type PlanKey } from '../lib/pricing-plans'
+import { PLAN_DISPLAY, type PlanKey } from '../lib/pricing-plans'
+import type { BillingInterval } from '../lib/pricing'
 
 export default function PricingPage() {
   const [loading, setLoading] = useState('')
   const [yearly, setYearly] = useState(false)
-  const [autoTriggered, setAutoTriggered] = useState(false)
   const [checkoutError, setCheckoutError] = useState('')
+  const autoTriggeredRef = useRef(false)
+  const interval: BillingInterval = yearly ? 'yearly' : 'monthly'
 
-  const standardPriceId = useMemo(() => getPriceId('standard', yearly), [yearly])
-  const premiumPriceId = useMemo(() => getPriceId('premium', yearly), [yearly])
-
-  const startCheckout = async (priceId: string, auto = false) => {
+  const startCheckout = async (plan: PlanKey, selectedInterval: BillingInterval, auto = false) => {
     setCheckoutError('')
-
-    if (!priceId) {
-      setCheckoutError('Prijsconfig ontbreekt. Checkout kon niet starten.')
-      return
-    }
-
-    setLoading(priceId)
+    const loadingKey = `${plan}:${selectedInterval}`
+    setLoading(loadingKey)
     const supabase = createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
     if (!user) {
-      const next = `/pricing?checkout=1&price=${encodeURIComponent(priceId)}`
+      const next = `/pricing?checkout=1&plan=${encodeURIComponent(plan)}&interval=${encodeURIComponent(selectedInterval)}`
       window.location.href = `/login?next=${encodeURIComponent(next)}`
       return
     }
@@ -38,7 +32,7 @@ export default function PricingPage() {
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId, email: user.email, userId: user.id }),
+        body: JSON.stringify({ plan, interval: selectedInterval, email: user.email, userId: user.id }),
       })
 
       const raw = await response.text()
@@ -75,120 +69,21 @@ export default function PricingPage() {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
     const shouldCheckout = params.get('checkout') === '1'
-    const priceFromQuery = params.get('price')
-    if (!shouldCheckout || !priceFromQuery || autoTriggered) return
-    setAutoTriggered(true)
-    void startCheckout(priceFromQuery, true)
-  }, [autoTriggered])
-
-  function PlanCard({ plan }: { plan: PlanKey }) {
-    const display = PLAN_DISPLAY[plan]
-    const priceId = plan === 'standard' ? standardPriceId : premiumPriceId
-    const isLoading = loading === priceId
-
-    return (
-      <div
-        style={{
-          background: 'rgba(255,255,255,0.05)',
-          borderRadius: '16px',
-          padding: '32px',
-          width: '320px',
-          border:
-            plan === 'premium'
-              ? '1px solid rgba(240,198,122,0.4)'
-              : '1px solid rgba(240,198,122,0.15)',
-          position: 'relative',
-        }}
-      >
-        {plan === 'premium' ? (
-          <div
-            style={{
-              position: 'absolute',
-              top: '-12px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'linear-gradient(135deg, #f0c67a, #f5dca8)',
-              color: '#0d0d2b',
-              padding: '4px 16px',
-              borderRadius: '12px',
-              fontSize: '12px',
-              fontWeight: 'bold',
-            }}
-          >
-            Meest gekozen
-          </div>
-        ) : null}
-
-        <h2
-          style={{
-            fontFamily: 'Cormorant Garamond, serif',
-            fontSize: '24px',
-            color: plan === 'premium' ? '#f0c67a' : '#f5dca8',
-            marginBottom: '8px',
-          }}
-        >
-          {display.name}
-        </h2>
-        <p
-          style={{
-            color: '#f5dca8',
-            opacity: 0.6,
-            fontSize: '14px',
-            marginBottom: '24px',
-          }}
-        >
-          {display.subtitle}
-        </p>
-
-        <div style={{ marginBottom: '24px' }}>
-          <span style={{ fontSize: '40px', color: '#f0c67a', fontWeight: 'bold' }}>
-            {yearly ? display.yearlyPriceLabel : display.monthlyPriceLabel}
-          </span>
-          <span style={{ color: '#f5dca8', opacity: 0.6 }}>
-            {yearly ? display.yearlySuffix : display.monthlySuffix}
-          </span>
-        </div>
-
-        <ul style={{ listStyle: 'none', padding: 0, marginBottom: '32px', textAlign: 'left' }}>
-          {display.features.map((item) => (
-            <li
-              key={item}
-              style={{
-                color: '#f5dca8',
-                padding: '8px 0',
-                fontSize: '14px',
-                borderBottom: '1px solid rgba(255,255,255,0.05)',
-              }}
-            >
-              ✦ {item}
-            </li>
-          ))}
-        </ul>
-
-        <button
-          onClick={() => void startCheckout(priceId || '')}
-          disabled={isLoading}
-          style={{
-            width: '100%',
-            padding: '14px',
-            borderRadius: '8px',
-            border:
-              plan === 'premium' ? 'none' : '1px solid rgba(240,198,122,0.4)',
-            background:
-              plan === 'premium'
-                ? 'linear-gradient(135deg, #f0c67a, #f5dca8)'
-                : 'transparent',
-            color: plan === 'premium' ? '#0d0d2b' : '#f0c67a',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-          }}
-        >
-          {isLoading ? 'Even wachten...' : 'Start gratis proefperiode'}
-        </button>
-      </div>
-    )
-  }
+    const planFromQuery = params.get('plan')
+    const intervalFromQuery = params.get('interval')
+    if (
+      !shouldCheckout ||
+      autoTriggeredRef.current ||
+      (planFromQuery !== 'standard' && planFromQuery !== 'premium') ||
+      (intervalFromQuery !== 'monthly' && intervalFromQuery !== 'yearly')
+    ) {
+      return
+    }
+    autoTriggeredRef.current = true
+    window.setTimeout(() => {
+      void startCheckout(planFromQuery, intervalFromQuery, true)
+    }, 0)
+  }, [])
 
   return (
     <div
@@ -270,8 +165,115 @@ export default function PricingPage() {
         </div>
 
         <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <PlanCard plan='standard' />
-          <PlanCard plan='premium' />
+          {(['standard', 'premium'] as PlanKey[]).map((plan) => {
+            const display = PLAN_DISPLAY[plan]
+            const loadingKey = `${plan}:${interval}`
+            const isLoading = loading === loadingKey
+
+            return (
+              <div
+                key={plan}
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  borderRadius: '16px',
+                  padding: '32px',
+                  width: '320px',
+                  border:
+                    plan === 'premium'
+                      ? '1px solid rgba(240,198,122,0.4)'
+                      : '1px solid rgba(240,198,122,0.15)',
+                  position: 'relative',
+                }}
+              >
+                {plan === 'premium' ? (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '-12px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'linear-gradient(135deg, #f0c67a, #f5dca8)',
+                      color: '#0d0d2b',
+                      padding: '4px 16px',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    Meest gekozen
+                  </div>
+                ) : null}
+
+                <h2
+                  style={{
+                    fontFamily: 'Cormorant Garamond, serif',
+                    fontSize: '24px',
+                    color: plan === 'premium' ? '#f0c67a' : '#f5dca8',
+                    marginBottom: '8px',
+                  }}
+                >
+                  {display.name}
+                </h2>
+                <p
+                  style={{
+                    color: '#f5dca8',
+                    opacity: 0.6,
+                    fontSize: '14px',
+                    marginBottom: '24px',
+                  }}
+                >
+                  {display.subtitle}
+                </p>
+
+                <div style={{ marginBottom: '24px' }}>
+                  <span style={{ fontSize: '40px', color: '#f0c67a', fontWeight: 'bold' }}>
+                    {yearly ? display.yearlyPriceLabel : display.monthlyPriceLabel}
+                  </span>
+                  <span style={{ color: '#f5dca8', opacity: 0.6 }}>
+                    {yearly ? display.yearlySuffix : display.monthlySuffix}
+                  </span>
+                </div>
+
+                <ul style={{ listStyle: 'none', padding: 0, marginBottom: '32px', textAlign: 'left' }}>
+                  {display.features.map((item) => (
+                    <li
+                      key={item}
+                      style={{
+                        color: '#f5dca8',
+                        padding: '8px 0',
+                        fontSize: '14px',
+                        borderBottom: '1px solid rgba(255,255,255,0.05)',
+                      }}
+                    >
+                      ✦ {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => void startCheckout(plan, interval)}
+                  disabled={isLoading}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    borderRadius: '8px',
+                    border:
+                      plan === 'premium' ? 'none' : '1px solid rgba(240,198,122,0.4)',
+                    background:
+                      plan === 'premium'
+                        ? 'linear-gradient(135deg, #f0c67a, #f5dca8)'
+                        : 'transparent',
+                    color: plan === 'premium' ? '#0d0d2b' : '#f0c67a',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {isLoading ? 'Even wachten...' : 'Start gratis proefperiode'}
+                </button>
+              </div>
+            )
+          })}
         </div>
 
         {checkoutError ? (

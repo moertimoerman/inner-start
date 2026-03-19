@@ -58,6 +58,14 @@ function createInitialSentenceClips(): SentenceClip[] {
 }
 
 export default function TestVoicePage() {
+  if (process.env.NODE_ENV === "production") {
+    return (
+      <main style={{ minHeight: "100vh", padding: "40px 20px", color: "#f5dca8" }}>
+        Deze testpagina is alleen beschikbaar in lokale development.
+      </main>
+    );
+  }
+
   const [text, setText] = useState(
     "You are safe. You are loved. I am safe. I am calm."
   );

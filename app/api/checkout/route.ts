@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { trackServerEvent } from '../../lib/analytics'
-import { VALID_PRICE_IDS } from '../../lib/pricing'
+import {
+  getCheckoutPriceId,
+  type BillingInterval,
+  type PlanKey,
+} from '../../lib/pricing'
 
 let stripeClient: Stripe | null = null
 
@@ -51,24 +55,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { priceId, email, userId } = await request.json()
+    const { plan, interval, email, userId } = await request.json()
 
-    if (!priceId || !email) {
+    if (!plan || !interval || !email) {
       return NextResponse.json(
-        { error: 'priceId en email zijn verplicht.' },
+        { error: 'plan, interval en email zijn verplicht.' },
         { status: 400 }
       )
     }
 
-    if (!VALID_PRICE_IDS.has(priceId)) {
+    const validPlan = plan === 'standard' || plan === 'premium'
+    const validInterval = interval === 'monthly' || interval === 'yearly'
+
+    if (!validPlan || !validInterval) {
       return NextResponse.json(
-        { error: 'Ongeldige priceId voor checkout.' },
+        { error: 'Ongeldige plan/interval combinatie voor checkout.' },
         { status: 400 }
       )
     }
 
-    // Manual dashboard requirement:
-    // Stripe Price IDs in app/lib/pricing.ts must exist in your Stripe account.
+    const selectedPlan: PlanKey = plan
+    const selectedInterval: BillingInterval = interval
+    const priceId = getCheckoutPriceId(selectedPlan, selectedInterval)
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -89,6 +97,8 @@ export async function POST(request: NextRequest) {
         user_id: userId || '',
         email,
         price_id: priceId,
+        plan: selectedPlan,
+        billing_interval: selectedInterval,
       },
     })
 
@@ -97,23 +107,15 @@ export async function POST(request: NextRequest) {
       distinctId: userId || email,
       properties: {
         priceId,
+        plan: selectedPlan,
+        interval: selectedInterval,
         sourcePath: '/pricing',
         stripeSessionLiveMode: session.livemode,
         stripeKeyMode: keyMode,
       },
     })
 
-    // Temporary debug payload for launch validation.
-    return NextResponse.json({
-      url: session.url,
-      debug: {
-        priceId,
-        liveMode: session.livemode,
-        keyMode,
-        checkoutMode: 'subscription',
-        usesSetupIntentFlow: false,
-      },
-    })
+    return NextResponse.json({ url: session.url })
   } catch (error) {
     console.error('Stripe error:', error)
     const stripeMessage =

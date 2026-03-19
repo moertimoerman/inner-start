@@ -1,49 +1,63 @@
 export const STRIPE_PRODUCT_ID = "prod_U9AdVp3p2DsXAt";
 
-const DEFAULT_PRICES = {
-  standardMonthly: "price_1TAsIPEIVa7nIrkaPOAbHTSk",
-  standardYearly: "price_1TAsIQEIVa7nIrkaeZ2N3Olp",
-  premiumMonthly: "price_1TAsIOEIVa7nIrkaif5wWa0E",
-  premiumYearly: "price_1TAsILEIVa7nIrkaKLSgxKCj",
-} as const;
-
-// Single source of truth for both client and server.
-// Price IDs are public identifiers and can safely use NEXT_PUBLIC env overrides.
-export const PRICES = {
-  standardMonthly:
-    process.env.NEXT_PUBLIC_STRIPE_PRICE_STANDARD_MONTHLY ||
-    process.env.STRIPE_PRICE_STANDARD_MONTHLY ||
-    DEFAULT_PRICES.standardMonthly,
-  standardYearly:
-    process.env.NEXT_PUBLIC_STRIPE_PRICE_STANDARD_YEARLY ||
-    process.env.STRIPE_PRICE_STANDARD_YEARLY ||
-    DEFAULT_PRICES.standardYearly,
-  premiumMonthly:
-    process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_MONTHLY ||
-    process.env.STRIPE_PRICE_PREMIUM_MONTHLY ||
-    DEFAULT_PRICES.premiumMonthly,
-  premiumYearly:
-    process.env.NEXT_PUBLIC_STRIPE_PRICE_PREMIUM_YEARLY ||
-    process.env.STRIPE_PRICE_PREMIUM_YEARLY ||
-    DEFAULT_PRICES.premiumYearly,
-} as const;
-
 export type PlanKey = "standard" | "premium";
 export type BillingInterval = "monthly" | "yearly";
 
-export function getPriceId(plan: PlanKey, interval: BillingInterval) {
+const SERVER_PRICE_ENV_NAMES = {
+  standardMonthly: "STRIPE_PRICE_STANDARD_MONTHLY",
+  standardYearly: "STRIPE_PRICE_STANDARD_YEARLY",
+  premiumMonthly: "STRIPE_PRICE_PREMIUM_MONTHLY",
+  premiumYearly: "STRIPE_PRICE_PREMIUM_YEARLY",
+} as const;
+
+type PriceEnvKey = keyof typeof SERVER_PRICE_ENV_NAMES;
+
+function getPriceKey(plan: PlanKey, interval: BillingInterval) {
   if (plan === "standard") {
-    return interval === "yearly" ? PRICES.standardYearly : PRICES.standardMonthly;
+    return interval === "yearly" ? "standardYearly" : "standardMonthly";
   }
-  return interval === "yearly" ? PRICES.premiumYearly : PRICES.premiumMonthly;
+  return interval === "yearly" ? "premiumYearly" : "premiumMonthly";
+}
+
+export function getRequiredPriceEnvName(plan: PlanKey, interval: BillingInterval) {
+  return SERVER_PRICE_ENV_NAMES[getPriceKey(plan, interval)];
+}
+
+export function getCheckoutPriceId(plan: PlanKey, interval: BillingInterval) {
+  const envName = getRequiredPriceEnvName(plan, interval);
+  const value = process.env[envName];
+  if (!value) {
+    throw new Error(`Missing required Stripe env var: ${envName}`);
+  }
+  return value;
+}
+
+function getConfiguredPriceMap() {
+  const getIfSet = (envKey: PriceEnvKey) => {
+    const envName = SERVER_PRICE_ENV_NAMES[envKey];
+    const value = process.env[envName];
+    return value && value.trim() ? value : null;
+  };
+
+  return {
+    standardMonthly: getIfSet("standardMonthly"),
+    standardYearly: getIfSet("standardYearly"),
+    premiumMonthly: getIfSet("premiumMonthly"),
+    premiumYearly: getIfSet("premiumYearly"),
+  } as const;
 }
 
 export function resolvePlanFromPriceId(priceId: string | null | undefined): PlanKey {
   if (!priceId) return "standard";
-  if (priceId === PRICES.premiumMonthly || priceId === PRICES.premiumYearly) {
+  const prices = getConfiguredPriceMap();
+  if (priceId === prices.premiumMonthly || priceId === prices.premiumYearly) {
     return "premium";
   }
   return "standard";
 }
 
-export const VALID_PRICE_IDS = new Set(Object.values(PRICES));
+export const VALID_PRICE_IDS = new Set(
+  Object.values(getConfiguredPriceMap()).filter(
+    (value): value is string => Boolean(value)
+  )
+);
