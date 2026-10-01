@@ -35,7 +35,7 @@ export const AUDIO_LAYER_PLAN: Record<AudioLayer, { description: string }> = {
   },
 };
 
-export const MUSIC_LAYER_SRC = "/audio/ambience.m4a";
+export const MUSIC_LAYER_SRC = "/api/audio/ambience";
 
 export const BREATHING_LAYER_FILES = [
   "/audio/breathing/breathing-01.m4a",
@@ -51,7 +51,7 @@ export const BREATHING_LAYER_FILES = [
 ];
 
 // breathing-08 original is very subtle; this boosted render is easier to hear in MVP testing.
-export const DEFAULT_BREATHING_LAYER_SRC = "/audio/breathing/breathing-08-loud.m4a";
+export const DEFAULT_BREATHING_LAYER_SRC = "/api/audio/breathing";
 
 export function buildDutchVoicePacingSequence(): VoiceSequenceItem[] {
   return [

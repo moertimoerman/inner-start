@@ -9,6 +9,12 @@ import {
 
 export const runtime = "nodejs";
 
+function productionDisabled() {
+  return process.env.NODE_ENV === "production"
+    ? NextResponse.json({ error: "Not found" }, { status: 404 })
+    : null;
+}
+
 function resolveVoiceId(
   requestedVoiceId: string | undefined,
   requestedVoiceProfile: string | undefined
@@ -41,6 +47,9 @@ function parseTargetMinutes(value: string | null) {
 }
 
 export async function GET(req: Request) {
+  const disabled = productionDisabled();
+  if (disabled) return disabled;
+
   const { searchParams } = new URL(req.url);
   const mode = searchParams.get("mode");
 
@@ -133,6 +142,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const disabled = productionDisabled();
+  if (disabled) return disabled;
+
   try {
     const body = await req.json();
     const language: Language =

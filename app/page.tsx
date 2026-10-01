@@ -2,7 +2,6 @@ import { StarField } from "@/components/StarField";
 import { Hero } from "@/components/Hero";
 import { BenefitsSection } from "@/components/BenefitsSection";
 import { CTASection } from "@/components/CTASection";
-import { cookies } from "next/headers";
 
 function SectionLabel({ text }: { text: string }) {
   return (
@@ -22,10 +21,7 @@ function SectionLabel({ text }: { text: string }) {
   );
 }
 
-export default async function Home() {
-  const cookieStore = await cookies();
-  const variant = cookieStore.get("exp_home_copy")?.value === "B" ? "B" : "A";
-
+export default function Home() {
   return (
     <main
       style={{
@@ -35,7 +31,7 @@ export default async function Home() {
       }}
     >
       <StarField />
-      <Hero variant={variant} />
+      <Hero />
 
       <BenefitsSection />
 
@@ -64,15 +60,15 @@ export default async function Home() {
           {[
             {
               title: "Ik ben veilig",
-              body: "Je kind voelt dat het gedragen wordt en tot rust mag komen.",
+              body: "Warme woorden ondersteunen een rustig en vertrouwd luistermoment.",
             },
             {
               title: "Ik ben waardevol",
-              body: "Je kind leert van binnen: ik ben goed zoals ik ben.",
+              body: "Bemoedigende zinnen herhalen: ik ben goed zoals ik ben.",
             },
             {
               title: "Ik kan groeien",
-              body: "Je kind bouwt een innerlijke stem die helpt bij spanning en uitdagingen.",
+              body: "Positieve taal geeft woorden aan moed, rust en groei.",
             },
           ].map((item) => (
             <div
@@ -147,40 +143,20 @@ export default async function Home() {
           luistert nog steeds.
         </p>
 
-        {variant === "B" ? (
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: 16,
-              color: "var(--text-muted)",
-              lineHeight: 1.8,
-              maxWidth: 620,
-              margin: "0 auto",
-            }}
-          >
-            In deze overgang tussen waken en slapen is het brein extra
-            ontvankelijk voor kalme woorden en gevoelens van veiligheid. Inner
-            Sleep gebruikt dat moment met een rustige stem, doordacht sound
-            design en liefdevolle taal om nacht na nacht een diep gevoel van
-            veiligheid en eigenwaarde te versterken.
-          </p>
-        ) : (
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans)",
-              fontSize: 16,
-              color: "var(--text-muted)",
-              lineHeight: 1.8,
-              maxWidth: 620,
-              margin: "0 auto",
-            }}
-          >
-            Dit is een zacht en natuurlijk overgangsmoment waarin woorden
-            dieper kunnen landen. Inner Sleep gebruikt die minuten met een
-            rustige stem, doordacht sound design en warme woorden die helpen om
-            veiligheid en zelfvertrouwen op te bouwen.
-          </p>
-        )}
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans)",
+            fontSize: 16,
+            color: "var(--text-muted)",
+            lineHeight: 1.8,
+            maxWidth: 620,
+            margin: "0 auto",
+          }}
+        >
+          Inner Sleep gebruikt dit rustige overgangsmoment voor een vaste
+          luisterroutine met een kalme stem, zacht sound design en warme woorden.
+          Het is ontspannende audio, geen behandeling of medisch hulpmiddel.
+        </p>
       </section>
 
       <section
@@ -278,8 +254,8 @@ export default async function Home() {
               marginBottom: 12,
             }}
           >
-            Veel ouders gebruiken Inner Sleep als onderdeel van hun avondroutine:
-            een paar rustige minuten voordat het licht uitgaat.
+            Je kunt Inner Sleep gebruiken als onderdeel van de avondroutine:
+            een rustig luistermoment voordat het licht uitgaat.
           </p>
           <p
             style={{
@@ -290,8 +266,7 @@ export default async function Home() {
               marginBottom: 16,
             }}
           >
-            Kinderen luisteren, ontspannen, en nemen die woorden langzaam mee als
-            hun eigen innerlijke stem.
+            Je kind hoeft niets te doen of te presteren en kan gewoon luisteren.
           </p>
 
           <div style={{ display: "grid", gap: 10 }}>

@@ -1,11 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import AudioPlayer from "../../components/AudioPlayer";
-import { createClient } from "../../utils/supabase-server";
-import {
-  getAccessStatusByEmail,
-  tryActivateAccessFromCheckoutSession,
-} from "../lib/subscription-status";
+import { getInnerUser } from "../lib/auth";
+import { getAccessStatusForUser } from "../lib/subscription-status";
 import { getServerPreferences } from "../lib/user-preferences-server";
 
 export default async function ProtectedAppPage({
@@ -13,30 +10,16 @@ export default async function ProtectedAppPage({
 }: {
   searchParams: Promise<{ checkout?: string; session_id?: string }>;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getInnerUser();
   const query = await searchParams;
 
   if (!user) {
     redirect("/login");
   }
 
-  let access = await getAccessStatusByEmail(user.email);
+  const access = await getAccessStatusForUser(user);
   const prefs = await getServerPreferences();
   const checkoutSuccess = query?.checkout === "success";
-
-  // Recover access directly after Stripe return when webhook sync is delayed.
-  if (!access.hasActiveAccess && checkoutSuccess && query?.session_id) {
-    const recovered = await tryActivateAccessFromCheckoutSession({
-      email: user.email,
-      sessionId: query.session_id,
-    });
-    if (recovered) {
-      access = await getAccessStatusByEmail(user.email);
-    }
-  }
 
   if (!access.hasActiveAccess) {
     return (
@@ -70,8 +53,8 @@ export default async function ProtectedAppPage({
           </h1>
           {checkoutSuccess ? (
             <p style={{ color: "#f5dca8", opacity: 0.85, marginBottom: 22 }}>
-              Betaling ontvangen. We verwerken je toegang nu. Ververs deze pagina
-              over een paar seconden als je toegang nog niet zichtbaar is.
+              Checkout afgerond. Stripe verwerkt je abonnement nog. Ververs deze
+              pagina over enkele seconden als je toegang nog niet zichtbaar is.
             </p>
           ) : (
             <p style={{ color: "#f5dca8", opacity: 0.85, marginBottom: 22 }}>

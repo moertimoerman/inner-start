@@ -17,15 +17,19 @@ const MIX_PRESETS: Record<
   MixPreset,
   { label: string; music: number; breathing: number; voice: number }
 > = {
-  soft: { label: "Soft", music: 0.05, breathing: 0.15, voice: 1.0 },
-  balanced: { label: "Balanced", music: 0.05, breathing: 0.15, voice: 1.0 },
-  voice: { label: "Voice Priority", music: 0.05, breathing: 0.15, voice: 1.0 },
+  soft: { label: "Zacht", music: 0.03, breathing: 0.08, voice: 0.82 },
+  balanced: { label: "Gebalanceerd", music: 0.05, breathing: 0.15, voice: 1.0 },
+  voice: { label: "Stem voorop", music: 0.025, breathing: 0.08, voice: 1.0 },
 };
 
 type Props = {
   initialVoiceProfile?: VoiceProfile;
   initialMixPreset?: MixPreset;
 };
+
+function getNowMs() {
+  return Date.now();
+}
 
 export default function AudioPlayer({
   initialVoiceProfile = DEFAULT_PREFERENCES.voiceProfile,
@@ -45,24 +49,28 @@ export default function AudioPlayer({
   const [progress, setProgress] = useState(0);
   const [musicOn, setMusicOn] = useState(true);
   const [breathingOn, setBreathingOn] = useState(true);
-  const [mixPreset, setMixPreset] = useState<MixPreset>(initialMixPreset);
-  const [voiceProfile, setVoiceProfile] = useState<VoiceProfile>(initialVoiceProfile);
+  const [mixPreset, setMixPreset] = useState<MixPreset>(() => {
+    if (typeof window === "undefined") {
+      return initialMixPreset;
+    }
+    const storedMix = localStorage.getItem(PREF_COOKIE_MIX);
+    return storedMix === "soft" || storedMix === "balanced" || storedMix === "voice"
+      ? storedMix
+      : initialMixPreset;
+  });
+  const [voiceProfile, setVoiceProfile] = useState<VoiceProfile>(() => {
+    if (typeof window === "undefined") {
+      return initialVoiceProfile;
+    }
+    const storedVoice = localStorage.getItem(PREF_COOKIE_VOICE);
+    return storedVoice === "female" || storedVoice === "male"
+      ? storedVoice
+      : initialVoiceProfile;
+  });
   const [audioError, setAudioError] = useState("");
 
   const isPlaying = sessionState === "playing";
   const isPaused = sessionState === "paused";
-
-  useEffect(() => {
-    const storedVoice = localStorage.getItem(PREF_COOKIE_VOICE);
-    const storedMix = localStorage.getItem(PREF_COOKIE_MIX);
-
-    if (storedVoice === "female" || storedVoice === "male") {
-      setVoiceProfile(storedVoice);
-    }
-    if (storedMix === "soft" || storedMix === "balanced" || storedMix === "voice") {
-      setMixPreset(storedMix);
-    }
-  }, []);
 
   const activeVoice = useMemo(() => getStandardVoiceConfig(voiceProfile), [voiceProfile]);
 
@@ -75,7 +83,11 @@ export default function AudioPlayer({
   }
 
   useEffect(() => {
-    applyMixVolumes();
+    const preset = MIX_PRESETS[mixPreset];
+
+    if (voiceRef.current) voiceRef.current.volume = preset.voice;
+    if (ambienceRef.current) ambienceRef.current.volume = musicOn ? preset.music : 0;
+    if (breathingRef.current) breathingRef.current.volume = breathingOn ? preset.breathing : 0;
   }, [mixPreset, musicOn, breathingOn]);
 
   function startLayers() {
@@ -117,7 +129,7 @@ export default function AudioPlayer({
       stopSession();
       return;
     }
-    playStartTsRef.current = Date.now();
+    playStartTsRef.current = getNowMs();
     sessionTimerRef.current = setTimeout(() => {
       stopSession();
     }, remainingMs);
@@ -133,11 +145,16 @@ export default function AudioPlayer({
     setProgress(0);
     remainingMsRef.current = SESSION_TARGET_MS;
 
-    startLayers();
-
-    await voice.play().catch(() => {
+    try {
+      await voice.play();
+    } catch {
+      stopLayers(true);
+      setSessionState("idle");
       setAudioError("Audio kon niet starten. Tik nogmaals op Start.");
-    });
+      return;
+    }
+
+    startLayers();
     setSessionState("playing");
     runStopTimer(remainingMsRef.current);
   }
@@ -147,7 +164,7 @@ export default function AudioPlayer({
     stopLayers(false);
     clearSessionTimer();
     if (playStartTsRef.current) {
-      const elapsed = Date.now() - playStartTsRef.current;
+      const elapsed = getNowMs() - playStartTsRef.current;
       remainingMsRef.current = Math.max(0, remainingMsRef.current - elapsed);
     }
     playStartTsRef.current = null;
@@ -155,14 +172,18 @@ export default function AudioPlayer({
   }
 
   async function resumeSession() {
-    startLayers();
-
     const voice = voiceRef.current;
     if (!voice) return;
 
-    await voice.play().catch(() => {
+    try {
+      await voice.play();
+    } catch {
       setAudioError("Kon niet hervatten. Probeer opnieuw.");
-    });
+      stopLayers(false);
+      return;
+    }
+
+    startLayers();
     setSessionState("playing");
     runStopTimer(remainingMsRef.current);
   }
@@ -199,8 +220,9 @@ export default function AudioPlayer({
   function handleVoiceError() {
     console.error(`STANDARD_AUDIO_FILE_MISSING_OR_INVALID: ${activeVoice.standardSrc}`);
     setAudioError(
-      `Kon standaardaudio niet laden (${activeVoice.standardSrc}). Controleer of dit bestand bestaat in /public/audio/standard/.`
+      "De audio kon niet worden geladen. Ververs de pagina of probeer het later opnieuw."
     );
+    stopLayers(true);
     setSessionState("idle");
     clearSessionTimer();
     playStartTsRef.current = null;
@@ -396,7 +418,7 @@ export default function AudioPlayer({
         onEnded={handleVoiceEnded}
         onError={handleVoiceError}
       />
-      <audio ref={ambienceRef} src="/audio/ambience.m4a" />
+      <audio ref={ambienceRef} src="/api/audio/ambience" />
       <audio ref={breathingRef} src={DEFAULT_BREATHING_LAYER_SRC} />
     </div>
   );

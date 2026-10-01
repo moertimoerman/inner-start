@@ -1,7 +1,22 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
+
+function seededValue(seed: number) {
+  const value = Math.sin(seed * 12.9898) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+const STARS = Array.from({ length: 70 }, (_, index) => ({
+  id: index,
+  left: `${seededValue(index + 1) * 100}%`,
+  top: `${seededValue(index + 101) * 100}%`,
+  size: seededValue(index + 201) * 2.5 + 0.5,
+  delay: seededValue(index + 301) * 4,
+  duration: seededValue(index + 401) * 3 + 2,
+  color:
+    seededValue(index + 501) > 0.8
+      ? "var(--moon-gold)"
+      : "var(--text-primary)",
+}));
 
 function Star({ style }: { style: CSSProperties }) {
   return (
@@ -13,26 +28,9 @@ function Star({ style }: { style: CSSProperties }) {
 }
 
 export function StarField() {
-  const [stars, setStars] = useState<
-    { id: number; left: string; top: string; size: number; delay: number; duration: number; color: string }[]
-  >([]);
-
-  useEffect(() => {
-    const generated = Array.from({ length: 70 }, (_, i) => ({
-      id: i,
-      left: `${Math.random() * 100}%`,
-      top: `${Math.random() * 100}%`,
-      size: Math.random() * 2.5 + 0.5,
-      delay: Math.random() * 4,
-      duration: Math.random() * 3 + 2,
-      color: Math.random() > 0.8 ? "var(--moon-gold)" : "var(--text-primary)",
-    }));
-    setStars(generated);
-  }, []);
-
   return (
     <>
-      {stars.map((s) => (
+      {STARS.map((s) => (
         <Star
           key={s.id}
           style={{

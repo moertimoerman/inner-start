@@ -1,20 +1,18 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "../../utils/supabase-server";
-import { getAccessStatusByEmail } from "../lib/subscription-status";
+import { getInnerUser } from "../lib/auth";
+import { getAccessStatusForUser } from "../lib/subscription-status";
 import { SignOutButton } from "../../components/SignOutButton";
+import { BillingPortalButton } from "../../components/BillingPortalButton";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getInnerUser();
 
   if (!user) {
     redirect("/login");
   }
 
-  const access = await getAccessStatusByEmail(user.email);
+  const access = await getAccessStatusForUser(user);
 
   return (
     <main
@@ -58,13 +56,13 @@ export default async function DashboardPage() {
           }}
         >
           <h2 style={{ color: "#f0c67a", marginBottom: 10 }}>
-            Subscription status
+            Abonnement
           </h2>
           <p style={{ color: "#f5dca8", marginBottom: 6 }}>
             Status: <strong>{access.subscriptionStatus ?? "geen abonnement"}</strong>
           </p>
           <p style={{ color: "#f5dca8" }}>
-            Plan: <strong>{access.plan ?? "n.v.t."}</strong>
+            Plan: <strong>{access.plan === "standard" ? "Standard" : access.plan ?? "n.v.t."}</strong>
           </p>
         </div>
 
@@ -106,6 +104,7 @@ export default async function DashboardPage() {
           >
             Bekijk abonnementen
           </Link>
+          {access.stripeCustomerId ? <BillingPortalButton /> : null}
         </div>
       </div>
     </main>

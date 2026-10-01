@@ -58,13 +58,7 @@ function createInitialSentenceClips(): SentenceClip[] {
 }
 
 export default function TestVoicePage() {
-  if (process.env.NODE_ENV === "production") {
-    return (
-      <main style={{ minHeight: "100vh", padding: "40px 20px", color: "#f5dca8" }}>
-        Deze testpagina is alleen beschikbaar in lokale development.
-      </main>
-    );
-  }
+  const isProduction = process.env.NODE_ENV === "production";
 
   const [text, setText] = useState(
     "You are safe. You are loved. I am safe. I am calm."
@@ -114,6 +108,8 @@ export default function TestVoicePage() {
       void syncBreathingLayer(false);
       stopMusicSynthLayer();
     };
+    // Cleanup helpers only stop mutable audio refs; audioUrl is the intended trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioUrl]);
 
   useEffect(() => {
@@ -136,6 +132,14 @@ export default function TestVoicePage() {
       );
     }
   }, [mixPreset]);
+
+  if (isProduction) {
+    return (
+      <main style={{ minHeight: "100vh", padding: "40px 20px", color: "#f5dca8" }}>
+        Deze testpagina is alleen beschikbaar in lokale development.
+      </main>
+    );
+  }
 
   function createAudioContext() {
     const Context =

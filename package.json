@@ -4,19 +4,21 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/upload-audio-to-blob.mjs && next build --webpack",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "check": "npm run lint && npm run test && npm run build",
+    "upload:audio": "node scripts/upload-audio-to-blob.mjs",
     "generate:standard:sentences": "node scripts/generate-standard-sentences.mjs",
     "build:audio:track": "node scripts/build-audio-track.mjs",
     "build:female:final-track": "node scripts/render-female-final-track.mjs",
     "build:male:final-track": "node scripts/render-male-final-track.mjs"
   },
   "dependencies": {
-    "@stripe/stripe-js": "^8.9.0",
-    "@supabase/ssr": "^0.9.0",
-    "@supabase/supabase-js": "^2.98.0",
-    "next": "16.1.6",
+    "@clerk/nextjs": "^7.9.8",
+    "@vercel/blob": "^2.8.0",
+    "next": "^16.3.7",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "stripe": "^20.4.0"
@@ -27,8 +29,9 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "^16.3.7",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }

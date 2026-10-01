@@ -1,46 +1,48 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
-import { createClient } from '../../utils/supabase-browser'
+import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { PLAN_DISPLAY, type PlanKey } from '../lib/pricing-plans'
 import type { BillingInterval } from '../lib/pricing'
 
 export default function PricingPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState('')
   const [yearly, setYearly] = useState(false)
   const [checkoutError, setCheckoutError] = useState('')
   const autoTriggeredRef = useRef(false)
   const interval: BillingInterval = yearly ? 'yearly' : 'monthly'
 
-  const startCheckout = async (plan: PlanKey, selectedInterval: BillingInterval, auto = false) => {
+  const startCheckout = useCallback(async (plan: PlanKey, selectedInterval: BillingInterval, auto = false) => {
     setCheckoutError('')
     const loadingKey = `${plan}:${selectedInterval}`
     setLoading(loadingKey)
-    const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      const next = `/pricing?checkout=1&plan=${encodeURIComponent(plan)}&interval=${encodeURIComponent(selectedInterval)}`
-      window.location.href = `/login?next=${encodeURIComponent(next)}`
-      return
-    }
 
     try {
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, interval: selectedInterval, email: user.email, userId: user.id }),
+        body: JSON.stringify({ interval: selectedInterval }),
       })
 
       const raw = await response.text()
-      let payload: { url?: string; error?: string } = {}
+      let payload: { url?: string; error?: string; loginUrl?: string; dashboardUrl?: string } = {}
       try {
         payload = raw ? JSON.parse(raw) : {}
       } catch {
         payload = { error: raw || `Onverwachte response (${response.status})` }
+      }
+
+      if (response.status === 401) {
+        const next = `/pricing?checkout=1&plan=standard&interval=${encodeURIComponent(selectedInterval)}`
+        router.push(`/login?next=${encodeURIComponent(next)}`)
+        return
+      }
+
+      if (response.status === 409 && payload.dashboardUrl) {
+        router.push(payload.dashboardUrl)
+        return
       }
 
       if (!response.ok || payload.error || !payload.url) {
@@ -52,7 +54,7 @@ export default function PricingPage() {
         return
       }
 
-      window.location.href = payload.url
+      window.location.assign(payload.url)
     } catch (error) {
       const message =
         error instanceof Error
@@ -63,7 +65,7 @@ export default function PricingPage() {
       setCheckoutError(`Checkout fout via /api/checkout: ${message}`)
       setLoading('')
     }
-  }
+  }, [router])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -74,7 +76,7 @@ export default function PricingPage() {
     if (
       !shouldCheckout ||
       autoTriggeredRef.current ||
-      (planFromQuery !== 'standard' && planFromQuery !== 'premium') ||
+      planFromQuery !== 'standard' ||
       (intervalFromQuery !== 'monthly' && intervalFromQuery !== 'yearly')
     ) {
       return
@@ -83,7 +85,7 @@ export default function PricingPage() {
     window.setTimeout(() => {
       void startCheckout(planFromQuery, intervalFromQuery, true)
     }, 0)
-  }, [])
+  }, [startCheckout])
 
   return (
     <div
@@ -105,7 +107,7 @@ export default function PricingPage() {
           Inner Sleep
         </h1>
         <p style={{ color: '#f5dca8', fontSize: '16px', marginBottom: '40px', opacity: 0.8 }}>
-          Geef je kind een goede start — iedere nacht opnieuw
+          Een rustig luistermoment — iedere avond opnieuw
         </p>
 
         <div
@@ -120,7 +122,10 @@ export default function PricingPage() {
           <span style={{ color: !yearly ? '#f0c67a' : '#f5dca8', opacity: !yearly ? 1 : 0.5 }}>
             Maandelijks
           </span>
-          <div
+          <button
+            type="button"
+            aria-label="Wissel tussen maandelijks en jaarlijks"
+            aria-pressed={yearly}
             onClick={() => setYearly(!yearly)}
             style={{
               width: '52px',
@@ -130,6 +135,8 @@ export default function PricingPage() {
               cursor: 'pointer',
               position: 'relative',
               transition: 'background 0.3s',
+              border: 0,
+              padding: 0,
             }}
           >
             <div
@@ -144,7 +151,7 @@ export default function PricingPage() {
                 transition: 'left 0.3s',
               }}
             />
-          </div>
+          </button>
           <span style={{ color: yearly ? '#f0c67a' : '#f5dca8', opacity: yearly ? 1 : 0.5 }}>
             Jaarlijks
           </span>
@@ -165,7 +172,7 @@ export default function PricingPage() {
         </div>
 
         <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          {(['standard', 'premium'] as PlanKey[]).map((plan) => {
+          {(['standard'] as PlanKey[]).map((plan) => {
             const display = PLAN_DISPLAY[plan]
             const loadingKey = `${plan}:${interval}`
             const isLoading = loading === loadingKey
@@ -178,37 +185,15 @@ export default function PricingPage() {
                   borderRadius: '16px',
                   padding: '32px',
                   width: '320px',
-                  border:
-                    plan === 'premium'
-                      ? '1px solid rgba(240,198,122,0.4)'
-                      : '1px solid rgba(240,198,122,0.15)',
+                    border: '1px solid rgba(240,198,122,0.3)',
                   position: 'relative',
                 }}
               >
-                {plan === 'premium' ? (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '-12px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      background: 'linear-gradient(135deg, #f0c67a, #f5dca8)',
-                      color: '#0d0d2b',
-                      padding: '4px 16px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    Meest gekozen
-                  </div>
-                ) : null}
-
                 <h2
                   style={{
                     fontFamily: 'Cormorant Garamond, serif',
                     fontSize: '24px',
-                    color: plan === 'premium' ? '#f0c67a' : '#f5dca8',
+                    color: '#f0c67a',
                     marginBottom: '8px',
                   }}
                 >
@@ -257,13 +242,9 @@ export default function PricingPage() {
                     width: '100%',
                     padding: '14px',
                     borderRadius: '8px',
-                    border:
-                      plan === 'premium' ? 'none' : '1px solid rgba(240,198,122,0.4)',
-                    background:
-                      plan === 'premium'
-                        ? 'linear-gradient(135deg, #f0c67a, #f5dca8)'
-                        : 'transparent',
-                    color: plan === 'premium' ? '#0d0d2b' : '#f0c67a',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #f0c67a, #f5dca8)',
+                    color: '#0d0d2b',
                     fontSize: '16px',
                     fontWeight: 'bold',
                     cursor: 'pointer',

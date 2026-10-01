@@ -16,25 +16,25 @@ function setCookie(name: string, value: string) {
 }
 
 export default function SetupPage() {
-  const [voiceProfile, setVoiceProfile] = useState<VoiceProfile>(
-    DEFAULT_PREFERENCES.voiceProfile
-  );
-  const [mixPreset, setMixPreset] = useState<AppMixPreset>(
-    DEFAULT_PREFERENCES.mixPreset
-  );
-  const [saved, setSaved] = useState("");
-
-  useEffect(() => {
+  const [voiceProfile, setVoiceProfile] = useState<VoiceProfile>(() => {
+    if (typeof window === "undefined") {
+      return DEFAULT_PREFERENCES.voiceProfile;
+    }
     const storedVoice = localStorage.getItem(PREF_COOKIE_VOICE);
+    return storedVoice === "female" || storedVoice === "male"
+      ? storedVoice
+      : DEFAULT_PREFERENCES.voiceProfile;
+  });
+  const [mixPreset, setMixPreset] = useState<AppMixPreset>(() => {
+    if (typeof window === "undefined") {
+      return DEFAULT_PREFERENCES.mixPreset;
+    }
     const storedMix = localStorage.getItem(PREF_COOKIE_MIX);
-
-    if (storedVoice === "female" || storedVoice === "male") {
-      setVoiceProfile(storedVoice);
-    }
-    if (storedMix === "soft" || storedMix === "balanced" || storedMix === "voice") {
-      setMixPreset(storedMix);
-    }
-  }, []);
+    return storedMix === "soft" || storedMix === "balanced" || storedMix === "voice"
+      ? storedMix
+      : DEFAULT_PREFERENCES.mixPreset;
+  });
+  const [saved, setSaved] = useState("");
 
   function saveSettings() {
     localStorage.setItem(PREF_COOKIE_VOICE, voiceProfile);

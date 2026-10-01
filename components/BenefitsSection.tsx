@@ -91,23 +91,23 @@ export function BenefitsSection() {
       <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
         <BenefitCard
           icon="🌙✨"
-          title="Rustiger inslapen"
-          description="Een kalme stem en zachte klanklaag helpen je kind de dag los te laten en rustiger in slaap te vallen."
+          title="Rustig luistermoment"
+          description="Een kalme stem en zachte klanklaag passen in een ontspannen overgang naar bedtijd."
         />
         <BenefitCard
           icon="🌱"
-          title="Meer zelfvertrouwen"
-          description="Door herhaling van warme kernboodschappen groeit een stabiel gevoel van eigenwaarde en innerlijke kracht."
+          title="Bemoedigende woorden"
+          description="Warme kernboodschappen geven woorden aan eigenwaarde, moed en vriendelijkheid."
         />
         <BenefitCard
           icon="🌊"
-          title="Innerlijke veiligheid"
-          description="De combinatie van stem en sound design ondersteunt een veilig basisgevoel dat helpt bij spanning en onrust."
+          title="Vertrouwde sfeer"
+          description="De combinatie van stem en sound design maakt van luisteren een zacht en voorspelbaar moment."
         />
         <BenefitCard
           icon="🕰️🌙"
           title="Gezonde avondroutine"
-          description="Een vaste, zachte slaaproutine geeft houvast voor ouder en kind en maakt bedtijd voorspelbaar en rustiger."
+          description="Een vaste luisterroutine kan bedtijd herkenbaar en overzichtelijk maken voor ouder en kind."
         />
       </div>
     </section>
