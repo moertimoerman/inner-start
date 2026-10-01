@@ -27,7 +27,7 @@ export default function VoorwaardenPage() {
         >
           Algemene Voorwaarden
         </h1>
-        <p style={{ opacity: 0.75, marginBottom: 28 }}>Laatst bijgewerkt: 11 maart 2026</p>
+        <p style={{ opacity: 0.75, marginBottom: 28 }}>Laatst bijgewerkt: 30 september 2026</p>
         <p style={{ marginBottom: 20, fontSize: 14 }}>
           <Link href="/" style={{ color: "#f5dca8" }}>
             Terug naar Home
@@ -56,15 +56,17 @@ export default function VoorwaardenPage() {
 
         <h2 style={{ color: "#f0c67a", marginTop: 24 }}>3. Abonnement en betaling</h2>
         <p>
-          Toegang tot premium of beschermde content loopt via een betaald abonnement. Betaling en
-          facturatie verlopen via Stripe. Prijzen, proefperiodes en abonnementsvormen worden op de
-          prijs-pagina weergegeven.
+          Toegang tot beschermde content loopt via het Standard-abonnement. Betaling en
+          facturatie verlopen via Stripe. De actuele prijs en abonnementsperiode staan vóór
+          betaling op de prijspagina en in Stripe Checkout. Na de gratis proefperiode wordt het
+          gekozen maand- of jaarbedrag automatisch geïncasseerd, tenzij je vóór het einde opzegt.
         </p>
 
         <h2 style={{ color: "#f0c67a", marginTop: 24 }}>4. Opzegging</h2>
         <p>
-          Je kunt opzeggen volgens de voorwaarden van de actieve betaalperiode. Na einde van de
-          betaalperiode kan toegang tot betaalde onderdelen stoppen.
+          Je kunt je abonnement online beheren en opzeggen via het dashboard. Bij opzegging
+          tijdens de proefperiode voorkom je de eerste incasso. Daarna blijft toegang normaal
+          beschikbaar tot het einde van de al betaalde periode.
         </p>
 
         <h2 style={{ color: "#f0c67a", marginTop: 24 }}>5. Toegestaan gebruik</h2>
@@ -89,9 +91,6 @@ export default function VoorwaardenPage() {
           Rubensstraat 93, 1077MN, Amsterdam, the Netherlands
         </p>
 
-        <p style={{ marginTop: 24, opacity: 0.75 }}>
-          Let op: dit is een praktische MVP-tekst en geen juridisch advies.
-        </p>
       </article>
     </main>
   );

@@ -1,37 +1,14 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Cormorant_Garamond, DM_Sans, DM_Mono } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import { MainNav } from "../components/MainNav";
 import { SiteFooter } from "../components/SiteFooter";
-import { GaScripts } from "../components/GaScripts";
 import "./globals.css";
 
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
-  variable: "--font-cormorant",
-  display: "swap",
-});
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-dm-sans",
-  display: "swap",
-});
-
-const dmMono = DM_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-dm-mono",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
-  title: "Inner Sleep — Rustige en veilige slaaproutine voor kinderen",
+  title: "Inner Sleep — Rustige luisterroutine voor het slapengaan",
   description:
-    "Inner Sleep helpt kinderen rustiger in slaap te vallen en van binnen steviger te worden, met kalme gesproken suggesties, slim sound design en een veilige slaaproutine.",
+    "Een rustige luisterroutine voor het slapengaan, met kalme gesproken boodschappen en zacht sound design.",
 };
 
 export default function RootLayout({
@@ -39,16 +16,29 @@ export default function RootLayout({
 }: {
   children: ReactNode;
 }) {
+  const clerkConfigured = Boolean(
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim() &&
+      process.env.CLERK_SECRET_KEY?.trim()
+  );
+
+  const app = (
+    <>
+      <MainNav authEnabled={clerkConfigured} />
+      {children}
+      <SiteFooter />
+    </>
+  );
+
   return (
-    <html
-      lang="nl"
-      className={`${cormorant.variable} ${dmSans.variable} ${dmMono.variable}`}
-    >
+    <html lang="nl">
       <body>
-        <GaScripts />
-        <MainNav />
-        {children}
-        <SiteFooter />
+        {clerkConfigured ? (
+          <ClerkProvider signInUrl="/login" signUpUrl="/registreren">
+            {app}
+          </ClerkProvider>
+        ) : (
+          app
+        )}
       </body>
     </html>
   );

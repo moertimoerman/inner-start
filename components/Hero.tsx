@@ -1,17 +1,12 @@
 "use client";
 
 import Link from "next/link";
-type HomeVariant = "A" | "B";
 
 function Moon() {
   return (
     <div
-      className="absolute animate-glow-pulse"
+      className="hero-moon animate-glow-pulse"
       style={{
-        top: "5%",
-        right: "8%",
-        width: 160,
-        height: 160,
         borderRadius: "50%",
         background:
           "radial-gradient(circle at 40% 40%, var(--moon-glow), var(--moon-gold), var(--moon-light))",
@@ -21,24 +16,7 @@ function Moon() {
   );
 }
 
-export function Hero({ variant }: { variant: HomeVariant }) {
-  async function trackStartTrialClick() {
-    try {
-      await fetch("/api/track", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event: "cta_start_gratis_proef_click",
-          variant,
-          path: "/",
-        }),
-        keepalive: true,
-      });
-    } catch {
-      // Ignore tracking failures.
-    }
-  }
-
+export function Hero() {
   return (
     <section
       style={{
@@ -105,9 +83,8 @@ export function Hero({ variant }: { variant: HomeVariant }) {
           animationDelay: "0.5s",
         }}
       >
-        Inner Sleep helpt kinderen rustiger in slaap te vallen en van binnen
-        steviger te worden, met kalme gesproken suggesties, slim sound design
-        en een veilige slaaproutine.
+        Een rustige luisterroutine voor het slapengaan, met kalme gesproken
+        boodschappen en zacht sound design — zonder extra schermtijd voor je kind.
       </p>
 
       <div
@@ -122,7 +99,6 @@ export function Hero({ variant }: { variant: HomeVariant }) {
       >
         <Link
           href="/pricing"
-          onClick={trackStartTrialClick}
           style={{
             display: "inline-block",
             padding: "16px 36px",
@@ -137,7 +113,7 @@ export function Hero({ variant }: { variant: HomeVariant }) {
             boxShadow: "0 4px 24px rgba(240,198,122,0.3)",
           }}
         >
-          Start gratis proef
+          Probeer 7 dagen gratis
         </Link>
         <Link
           href="/app"

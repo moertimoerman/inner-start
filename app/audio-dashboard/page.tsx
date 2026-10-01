@@ -25,13 +25,7 @@ function clipKey(voiceSet: VoiceSet, person: PersonType, topic: TopicType, index
 }
 
 export default function AudioDashboardPage() {
-  if (process.env.NODE_ENV === "production") {
-    return (
-      <main style={{ minHeight: "100vh", padding: "40px 20px", color: "#f5dca8" }}>
-        Deze testpagina is alleen beschikbaar in lokale development.
-      </main>
-    );
-  }
+  const isProduction = process.env.NODE_ENV === "production";
 
   const [voiceSet, setVoiceSet] = useState<VoiceSet>("female");
   const [person, setPerson] = useState<PersonType>("1");
@@ -57,6 +51,10 @@ export default function AudioDashboardPage() {
   const synthOscillatorsRef = useRef<OscillatorNode[]>([]);
 
   useEffect(() => {
+    if (isProduction) {
+      return;
+    }
+
     async function loadManifest() {
       setError("");
       setStatus("Manifest laden...");
@@ -82,7 +80,7 @@ export default function AudioDashboardPage() {
     }
 
     void loadManifest();
-  }, [voiceSet]);
+  }, [isProduction, voiceSet]);
 
   const filtered = useMemo(() => {
     const startByTopic: Record<TopicType, number> = {
@@ -147,7 +145,17 @@ export default function AudioDashboardPage() {
       stopAll();
       stop432Layer();
     };
+    // Cleanup functions only read and stop mutable audio refs on unmount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (isProduction) {
+    return (
+      <main style={{ minHeight: "100vh", padding: "40px 20px", color: "#f5dca8" }}>
+        Deze testpagina is alleen beschikbaar in lokale development.
+      </main>
+    );
+  }
 
   function start432Layer() {
     if (synthCtxRef.current && synthMasterGainRef.current) {

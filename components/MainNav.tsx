@@ -1,9 +1,8 @@
 "use client";
 
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { createClient } from "../utils/supabase-browser";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -13,41 +12,23 @@ const LINKS = [
   { href: "/dashboard", label: "Account" },
 ];
 
-export function MainNav() {
+function AccountLinks() {
+  return (
+    <>
+      <SignedOut>
+        <Link href="/login" className="nav-auth-button">
+          Inloggen
+        </Link>
+      </SignedOut>
+      <SignedIn>
+        <UserButton showName />
+      </SignedIn>
+    </>
+  );
+}
+
+export function MainNav({ authEnabled }: { authEnabled: boolean }) {
   const pathname = usePathname();
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (
-      typeof window === "undefined" ||
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ) {
-      return;
-    }
-
-    const supabase = createClient();
-    let mounted = true;
-
-    async function loadUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!mounted) return;
-      setUserEmail(user?.email ?? null);
-    }
-
-    void loadUser();
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserEmail(session?.user?.email ?? null);
-    });
-
-    return () => {
-      mounted = false;
-      listener.subscription.unsubscribe();
-    };
-  }, []);
 
   return (
     <header
@@ -85,7 +66,7 @@ export function MainNav() {
           Inner Sleep
         </Link>
 
-        <nav style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <nav aria-label="Hoofdnavigatie" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {LINKS.map((link) => {
             const active =
               pathname === link.href ||
@@ -104,9 +85,7 @@ export function MainNav() {
                   background: active
                     ? "linear-gradient(135deg, var(--moon-gold), var(--moon-light))"
                     : "rgba(255,255,255,0.06)",
-                  border: active
-                    ? "none"
-                    : "1px solid rgba(240,198,122,0.28)",
+                  border: active ? "none" : "1px solid rgba(240,198,122,0.28)",
                 }}
               >
                 {link.label}
@@ -115,37 +94,11 @@ export function MainNav() {
           })}
         </nav>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          {userEmail ? (
-            <Link
-              href="/dashboard"
-              style={{
-                textDecoration: "none",
-                padding: "8px 12px",
-                borderRadius: 999,
-                fontSize: 12,
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                background: "rgba(74, 222, 128, 0.14)",
-                border: "1px solid rgba(74, 222, 128, 0.45)",
-              }}
-            >
-              Ingelogd: {userEmail}
-            </Link>
+        <div style={{ minWidth: 88, display: "flex", justifyContent: "flex-end" }}>
+          {authEnabled ? (
+            <AccountLinks />
           ) : (
-            <Link
-              href="/login"
-              style={{
-                textDecoration: "none",
-                padding: "8px 12px",
-                borderRadius: 999,
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#0d0d2b",
-                background: "linear-gradient(135deg, var(--moon-gold), var(--moon-light))",
-                border: "none",
-              }}
-            >
+            <Link href="/login" className="nav-auth-button">
               Inloggen
             </Link>
           )}

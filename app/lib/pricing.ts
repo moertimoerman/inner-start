@@ -3,6 +3,9 @@ export const STRIPE_PRODUCT_ID = "prod_U9AdVp3p2DsXAt";
 export type PlanKey = "standard" | "premium";
 export type BillingInterval = "monthly" | "yearly";
 
+export const MVP_PLAN = "standard" as const satisfies PlanKey;
+export const MVP_BILLING_INTERVALS = ["monthly", "yearly"] as const;
+
 const SERVER_PRICE_ENV_NAMES = {
   standardMonthly: "STRIPE_PRICE_STANDARD_MONTHLY",
   standardYearly: "STRIPE_PRICE_STANDARD_YEARLY",
@@ -30,6 +33,10 @@ export function getCheckoutPriceId(plan: PlanKey, interval: BillingInterval) {
     throw new Error(`Missing required Stripe env var: ${envName}`);
   }
   return value;
+}
+
+export function isBillingInterval(value: unknown): value is BillingInterval {
+  return value === "monthly" || value === "yearly";
 }
 
 function getConfiguredPriceMap() {

@@ -1,134 +1,127 @@
-import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
-import { trackServerEvent } from '../../lib/analytics'
+import { NextRequest, NextResponse } from "next/server";
+import { getInnerUser, saveStripeCustomerId } from "../../lib/auth";
+import { getAppUrl, isClerkConfigured } from "../../lib/config";
 import {
   getCheckoutPriceId,
-  type BillingInterval,
-  type PlanKey,
-} from '../../lib/pricing'
-
-let stripeClient: Stripe | null = null
-
-function getStripeClient(): Stripe | null {
-  const secretKey = process.env.STRIPE_SECRET_KEY
-  if (!secretKey) return null
-
-  if (!stripeClient) {
-    stripeClient = new Stripe(secretKey, {
-      apiVersion: '2026-02-25.clover',
-    })
-  }
-
-  return stripeClient
-}
-
-function getKeyMode(secretKey: string | undefined) {
-  if (!secretKey) return 'missing'
-  if (secretKey.startsWith('sk_live_')) return 'live'
-  if (secretKey.startsWith('sk_test_')) return 'test'
-  return 'unknown'
-}
+  isBillingInterval,
+  MVP_PLAN,
+} from "../../lib/pricing";
+import { getStripeClient, getStripeKeyMode } from "../../lib/stripe";
+import { subscriptionBlocksCheckout } from "../../lib/subscription-policy";
 
 export async function POST(request: NextRequest) {
   try {
-    const secretKey = process.env.STRIPE_SECRET_KEY
-    const keyMode = getKeyMode(secretKey)
+    if (!isClerkConfigured()) {
+      return NextResponse.json(
+        { error: "Inloggen is nog niet geconfigureerd." },
+        { status: 503 }
+      );
+    }
 
-    if (process.env.NODE_ENV === 'production' && keyMode === 'test') {
-      console.error('CHECKOUT_KEY_MODE_ERROR: production draait met sk_test key.')
+    const user = await getInnerUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: "Log eerst in om de proefperiode te starten.", loginUrl: "/login?next=/pricing?checkout=1" },
+        { status: 401 }
+      );
+    }
+
+    const keyMode = getStripeKeyMode();
+    if (process.env.NODE_ENV === "production" && keyMode !== "live") {
+      console.error("CHECKOUT_KEY_MODE_ERROR", { keyMode });
+      return NextResponse.json(
+        { error: "Betalen is tijdelijk niet beschikbaar." },
+        { status: 503 }
+      );
+    }
+
+    const stripe = getStripeClient();
+    if (!stripe) {
+      return NextResponse.json(
+        { error: "Betalen is nog niet geconfigureerd." },
+        { status: 503 }
+      );
+    }
+
+    const body = (await request.json().catch(() => ({}))) as {
+      interval?: unknown;
+    };
+    if (!isBillingInterval(body.interval)) {
+      return NextResponse.json(
+        { error: "Kies een geldig maand- of jaarabonnement." },
+        { status: 400 }
+      );
+    }
+
+    let customerId = user.stripeCustomerId;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        name: user.firstName ?? undefined,
+        metadata: { clerk_user_id: user.id },
+      });
+      customerId = customer.id;
+      await saveStripeCustomerId(user.id, customerId);
+    }
+
+    const existingSubscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "all",
+      limit: 100,
+    });
+    const activeSubscription = existingSubscriptions.data.find((subscription) =>
+      subscriptionBlocksCheckout(subscription.status)
+    );
+
+    if (activeSubscription) {
       return NextResponse.json(
         {
-          error:
-            'Checkout staat op Stripe TEST mode. Zet in Vercel STRIPE_SECRET_KEY op een sk_live sleutel.',
-          keyMode,
+          error: "Je hebt al een abonnement. Beheer dit via je dashboard.",
+          dashboardUrl: "/dashboard",
         },
-        { status: 500 }
-      )
+        { status: 409 }
+      );
     }
 
-    const stripe = getStripeClient()
-    if (!stripe) {
-      console.error('CHECKOUT_CONFIG_ERROR: STRIPE_SECRET_KEY ontbreekt.')
-      return NextResponse.json(
-        { error: 'Serverconfiguratie ontbreekt: STRIPE_SECRET_KEY.' },
-        { status: 500 }
-      )
-    }
-
-    const { plan, interval, email, userId } = await request.json()
-
-    if (!plan || !interval || !email) {
-      return NextResponse.json(
-        { error: 'plan, interval en email zijn verplicht.' },
-        { status: 400 }
-      )
-    }
-
-    const validPlan = plan === 'standard' || plan === 'premium'
-    const validInterval = interval === 'monthly' || interval === 'yearly'
-
-    if (!validPlan || !validInterval) {
-      return NextResponse.json(
-        { error: 'Ongeldige plan/interval combinatie voor checkout.' },
-        { status: 400 }
-      )
-    }
-
-    const selectedPlan: PlanKey = plan
-    const selectedInterval: BillingInterval = interval
-    const priceId = getCheckoutPriceId(selectedPlan, selectedInterval)
-
+    const appUrl = getAppUrl(request.nextUrl.origin);
     const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
+      mode: "subscription",
+      customer: customerId,
+      client_reference_id: user.id,
       line_items: [
         {
-          price: priceId,
+          price: getCheckoutPriceId(MVP_PLAN, body.interval),
           quantity: 1,
         },
       ],
-      customer_email: email,
-      // Include checkout session id so /app can recover access if webhook sync is delayed.
-      success_url: `${request.nextUrl.origin}/app?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${request.nextUrl.origin}/pricing`,
+      success_url: `${appUrl}/app?checkout=success`,
+      cancel_url: `${appUrl}/pricing`,
+      allow_promotion_codes: true,
       subscription_data: {
-        trial_period_days: 7,
+        ...(existingSubscriptions.data.length === 0 ? { trial_period_days: 7 } : {}),
+        metadata: {
+          clerk_user_id: user.id,
+          plan: MVP_PLAN,
+          billing_interval: body.interval,
+        },
       },
       metadata: {
-        user_id: userId || '',
-        email,
-        price_id: priceId,
-        plan: selectedPlan,
-        billing_interval: selectedInterval,
+        clerk_user_id: user.id,
+        plan: MVP_PLAN,
+        billing_interval: body.interval,
       },
-    })
+    });
 
-    await trackServerEvent({
-      event: 'checkout_start',
-      distinctId: userId || email,
-      properties: {
-        priceId,
-        plan: selectedPlan,
-        interval: selectedInterval,
-        sourcePath: '/pricing',
-        stripeSessionLiveMode: session.livemode,
-        stripeKeyMode: keyMode,
-      },
-    })
+    if (!session.url) {
+      throw new Error("Stripe returned no checkout URL.");
+    }
 
-    return NextResponse.json({ url: session.url })
+    return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.error('Stripe error:', error)
-    const stripeMessage =
-      error && typeof error === 'object' && 'message' in error
-        ? String((error as { message?: unknown }).message ?? '')
-        : ''
+    console.error("CHECKOUT_ERROR", error);
     return NextResponse.json(
-      {
-        error: stripeMessage
-          ? `Checkout kon niet starten: ${stripeMessage}`
-          : 'Checkout kon niet starten door een serverfout.',
-      },
+      { error: "Checkout kon niet starten. Probeer het later opnieuw." },
       { status: 500 }
-    )
+    );
   }
 }

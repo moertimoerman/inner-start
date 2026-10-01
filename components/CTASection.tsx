@@ -32,8 +32,8 @@ export function CTASection() {
           marginBottom: 32,
         }}
       >
-        Probeer Inner Sleep 7 dagen gratis en ontdek wat een goede nachtrust
-        doet voor het zelfvertrouwen van je kind.
+        Probeer Inner Sleep 7 dagen gratis als rustig onderdeel van jullie
+        avondroutine.
       </p>
 
       <div
