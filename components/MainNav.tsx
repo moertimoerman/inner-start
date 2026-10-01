@@ -1,6 +1,6 @@
 "use client";
 
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { Show, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -15,14 +15,14 @@ const LINKS = [
 function AccountLinks() {
   return (
     <>
-      <SignedOut>
+      <Show when="signed-out">
         <Link href="/login" className="nav-auth-button">
           Inloggen
         </Link>
-      </SignedOut>
-      <SignedIn>
+      </Show>
+      <Show when="signed-in">
         <UserButton showName />
-      </SignedIn>
+      </Show>
     </>
   );
 }
